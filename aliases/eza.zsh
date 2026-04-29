@@ -1,0 +1,15 @@
+alias ls='eza --icons --group-directories-first --color=always'
+alias l='eza -l --icons --group-directories-first'
+alias ll='eza -l --icons --group-directories-first --git'
+alias la='eza -la --icons --group-directories-first --git'
+alias lt='eza --tree --icons --level=2'
+alias lta='eza --tree --icons --level=3 -a'
+alias lx='eza -lbhHigUmuSa --icons --group-directories-first'
+alias ldot='eza -ld .* --icons'
+alias l1='eza -1 --icons'
+
+alias lmod='eza -l --sort=modified --icons'
+alias lsize='eza -l --sort=size --icons'
+
+alias lg='eza -l --git --icons'
+alias lga='eza -la --git --icons'

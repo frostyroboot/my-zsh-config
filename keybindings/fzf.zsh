@@ -1,0 +1,1 @@
+bindkey '^F' fzf-file-widget
