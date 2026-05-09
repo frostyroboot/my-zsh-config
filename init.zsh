@@ -3,6 +3,8 @@
 
 export ZSH_CONFIG="${ZSH_CONFIG:-$HOME/.config/zsh}"
 
+setopt extended_glob null_glob
+
 # ====================== FUNCIONES DE AYUDA ======================
 source_file() {
     [[ -f "$1" && -r "$1" ]] || return
