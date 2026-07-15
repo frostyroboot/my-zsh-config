@@ -1,2 +1,2 @@
-export PATH="$PATH:/home/sbtnmf/.local/bin"
-export PATH="/home/sbtnmf/.opencode/bin:$PATH"
+export PATH="$PATH:$HOME/.local/bin"
+export PATH="$HOME/.opencode/bin:$PATH"
