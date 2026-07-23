@@ -10,7 +10,7 @@ fzf_preview() {
 
     # Directorios
     if [[ -d "$file" ]]; then
-        eza --tree --level=2 --icons --color=always "$file"
+        eza --tree --level=2 --icons=always --color=always "$file"
         return
     fi
 
@@ -35,7 +35,7 @@ fzf_preview() {
 
     # Archivos de código / texto (bat)
     if command -v bat >/dev/null 2>&1; then
-        bat --style=numbers,changes,header --color=always --line-range :300 "$file" 2>/dev/null || cat "$file"
+        bat --color=always --line-range :300 "$file" 2>/dev/null || cat "$file"
     else
         cat "$file"
     fi
@@ -57,24 +57,25 @@ ff() {
 # Cambiar a directorio (mejorado)
 fcd() {
     local dir
-    dir=$(fd -t d | fzf --preview 'fzf_preview {}') && cd "$dir"
+    dir=$(fd -t d --hidden --follow --exclude .git | fzf --preview 'fzf_preview {}') && cd "$dir"
 }
 
 fdz() { fcd; }  # alias corto
 
 # Listar archivos del directorio actual y preview
 fl() {
-    eza -la --icons --color=always | fzf --ansi --preview 'fzf_preview {}'
+    eza -la --icons=always --color=always | fzf --ansi --preview 'fzf_preview {}'
 }
 
-# Bonus: Buscar en historial y ejecutar
+# Buscar en historial con Atuin (Ctrl-R ya está bindeado por atuin init, fh es atajo directo)
 fh() {
-    eval $( ([ -n "$ZSH_NAME" ] && fc -l 1 || history) | fzf +s --tac | sed 's/ *[0-9]* *//')
+    eval "$(atuin search --interactive --)"
 }
 
 # Matar proceso con preview
 fkill() {
     local pid
-    pid=$(ps -ef | sed 1d | fzf --preview 'echo {}' | awk '{print $2}')
-    [[ -n "$pid" ]] && kill -9 "$pid"
+    pid=$(ps -ef | sed 1d | fzf --header 'Select to TERM (Enter=SIGTERM, fallback SIGKILL)' | awk '{print $2}')
+    [[ -z "$pid" ]] && return
+    kill "$pid" 2>/dev/null || kill -9 "$pid"
 }

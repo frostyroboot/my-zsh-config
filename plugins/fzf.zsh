@@ -8,11 +8,11 @@ export FZF_DEFAULT_OPTS="
 --height=80%
 --layout=reverse
 --border
---preview 'bat --style=numbers --color=always --line-range :300 {}'
+--preview 'bat --color=always --line-range :300 {}'
 --preview-window=right:60%"
 
 # ALT + C (directorios)
 export FZF_ALT_C_OPTS="
---preview 'eza --tree --level=2 --icons {}'
+--preview 'eza --tree --level=2 --icons=always {}'
 --preview-window=right:60%"
 
