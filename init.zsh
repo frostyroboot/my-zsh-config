@@ -14,7 +14,7 @@ source_file() {
 load_module() {
     local module="$1"
     local init_file="$ZSH_CONFIG/$module/init.zsh"
-    
+
     if [[ -f "$init_file" ]]; then
         source_file "$init_file"
     else
@@ -28,6 +28,7 @@ load_module() {
 # ====================== ORDEN DE CARGA ======================
 load_module "init"          # Variables de entorno y PATH (primero)
 load_module "plugins"       # Plugins externos (antes de core para que Atuin/prompt sobreescriban fzf)
+load_module "preview"       # Sistema de preview de fzf (antes de core/functions; exporta FZF_DEFAULT_OPTS)
 load_module "core"          # Configuración base de Zsh
 load_module "functions"     # Funciones personalizadas
 load_module "aliases"       # Aliases

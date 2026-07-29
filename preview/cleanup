@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# cleanup - Limpia daemons y FIFOs huérfanos de fzf-preview
+# Uso: cleanup (sin argumentos)
+# Llamado automáticamente al logout por el orquestador
+
+# Matar todos los procesos ueberzugpp layer que estén corriendo
+pkill -f "ueberzugpp layer" 2>/dev/null
+
+# Eliminar FIFOs y directorios temporales huérfanos
+rm -rf /tmp/fzf-preview.* 2>/dev/null
+rm -f /tmp/ueberzug-fzf-*.fifo 2>/dev/null
+rm -f /tmp/ueberzug-fzf-*.pid 2>/dev/null
+rm -f /tmp/ueberzugpp-*.fifo 2>/dev/null
+rm -f /tmp/ueberzugpp-*.pid 2>/dev/null
+
+echo "✓ Cleanup de fzf-preview completado"
