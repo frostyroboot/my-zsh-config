@@ -23,11 +23,23 @@ CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/fzf-preview"
 mkdir -p "$CACHE_DIR"
 
 # Elegir backend de imagen
-# Orden de preferencia: kitten (kitty/ghostty nativo, máxima calidad) →
-# ueberzugpp (alta calidad, daemon persistente) → chafa (fallback texto Unicode) →
-# catimg (ASCII) → genérico (file)
+# Orden de preferencia: kitten (kitty/ghostty nativo, m'axima calidad) '→'
+# ueberzugpp (alta calidad, daemon persistente) '→' chafa (fallback texto Unicode) '→'
+# catimg (ASCII) '→' gen'erico (file)
+# NOTA: Verificamos que kitten funcione realmente, no solo la variable de entorno
 if [[ -n "$KITTY_WINDOW_ID" || -n "$GHOSTTY_RESOURCES_DIR" ]] && command -v kitten >/dev/null 2>&1; then
-    IMG_PREVIEW="kitty_preview"
+    # Verificar que kitten icat realmente funciona (no falso positivo de KITTY_WINDOW_ID)
+    if kitten icat --clear --transfer-mode=memory --stdin=no --place="10x10@0x0" /dev/null 2>/dev/null; then
+        IMG_PREVIEW="kitty_preview"
+    elif command -v ueberzugpp >/dev/null 2>&1 || command -v ueberzug >/dev/null 2>&1; then
+        IMG_PREVIEW="ueberzug_preview"
+    elif command -v chafa >/dev/null 2>&1; then
+        IMG_PREVIEW="chafa_preview"
+    elif command -v catimg >/dev/null 2>&1; then
+        IMG_PREVIEW="catimg_preview"
+    else
+        IMG_PREVIEW="generic_preview"
+    fi
 elif command -v ueberzugpp >/dev/null 2>&1 || command -v ueberzug >/dev/null 2>&1; then
     IMG_PREVIEW="ueberzug_preview"
 elif command -v chafa >/dev/null 2>&1; then
