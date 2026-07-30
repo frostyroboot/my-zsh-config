@@ -293,6 +293,7 @@ preview_binary() {
 
 # ====================== DESPACHADOR PRINCIPAL ======================
 # Determinar tipo y llamar al handler apropiado
+# detect_type devuelve tipos cortos: directory, image, video, audio, pdf, json, markdown, epub, archive, text, binary
 TYPE=$(detect_type "$FILE")
 
 # Limpiar imagen anterior (solo si hay daemon de ueberzug activo)
@@ -306,27 +307,23 @@ if [[ -d "$FILE" ]]; then
     exit 0
 fi
 
-# Despachar por tipo MIME
+# Despachar por tipo corto (coincide con detect_type en common.sh)
 case "$TYPE" in
-    image/*)              preview_image "$FILE" ;;
-    video/*)              preview_video "$FILE" ;;
-    audio/*)              preview_audio "$FILE" ;;
-    application/pdf)      preview_pdf "$FILE" ;;
-    application/json)     preview_json "$FILE" ;;
-    text/markdown)        preview_markdown "$FILE" ;;
-    application/epub*|*.epub) preview_epub "$FILE" ;;
-    application/zip|application/x-tar|application/gzip|application/x-bzip2|application/x-xz)
-        preview_archive "$FILE" ;;
-    text/*|*/xml)
-        preview_text "$FILE" ;;
-    application/octet-stream|inode/x-empty)
-        # Fallback por extensión para cuando file no detecta bien
+    image)              preview_image "$FILE" ;;
+    video)              preview_video "$FILE" ;;
+    audio)              preview_audio "$FILE" ;;
+    pdf)                preview_pdf "$FILE" ;;
+    json)               preview_json "$FILE" ;;
+    markdown)           preview_markdown "$FILE" ;;
+    epub)               preview_epub "$FILE" ;;
+    archive)            preview_archive "$FILE" ;;
+    text)               preview_text "$FILE" ;;
+    binary|*)
+        # Fallback por extensión para binarios/desconocidos
         case "${FILE:l}" in
             *.epub) preview_epub "$FILE" ;;
             *.zip|*.tar*|*.7z|*.rar|*.gz|*.bz2|*.xz) preview_archive "$FILE" ;;
             *) preview_binary "$FILE" ;;
         esac
         ;;
-    *)
-        preview_binary "$FILE" ;;
 esac

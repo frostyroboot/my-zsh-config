@@ -56,14 +56,14 @@ fi
 
 # Si fzf muere abruptamente, los daemons de ueberzugpp pueden quedar.
 # El wrapper ya tiene su propio cleanup via trap, pero por si acaso
-# añadimos un fallback al logout de la shell.
+# añadimos un fallback al logout de la shell (zshexit_functions).
 
 _preview_shell_exit() {
     [[ -x "$FZF_PREVIEW_DIR/cleanup" ]] && "$FZF_PREVIEW_DIR/cleanup" 2>/dev/null
 }
 
 if [[ -z "${_PREVIEW_TRAP_INSTALLED:-}" ]]; then
-    precmd_functions+=(_preview_shell_exit)
+    zshexit_functions+=(_preview_shell_exit)
     _PREVIEW_TRAP_INSTALLED=1
 fi
 

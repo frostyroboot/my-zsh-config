@@ -13,4 +13,4 @@ rm -f /tmp/ueberzug-fzf-*.pid 2>/dev/null
 rm -f /tmp/ueberzugpp-*.fifo 2>/dev/null
 rm -f /tmp/ueberzugpp-*.pid 2>/dev/null
 
-echo "✓ Cleanup de fzf-preview completado"
+

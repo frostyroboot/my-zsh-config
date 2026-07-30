@@ -23,6 +23,9 @@ CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/fzf-preview"
 mkdir -p "$CACHE_DIR"
 
 # Elegir backend de imagen
+# Orden de preferencia: kitten (kitty/ghostty nativo, máxima calidad) →
+# ueberzugpp (alta calidad, daemon persistente) → chafa (fallback texto Unicode) →
+# catimg (ASCII) → genérico (file)
 if [[ -n "$KITTY_WINDOW_ID" || -n "$GHOSTTY_RESOURCES_DIR" ]] && command -v kitten >/dev/null 2>&1; then
     IMG_PREVIEW="kitty_preview"
 elif command -v ueberzugpp >/dev/null 2>&1 || command -v ueberzug >/dev/null 2>&1; then
