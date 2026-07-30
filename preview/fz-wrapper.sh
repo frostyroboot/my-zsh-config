@@ -9,46 +9,22 @@
 #   4. Ejecutar fzf (como subproceso, NO exec, para que el trap funcione)
 #   5. Cleanup al salir (trap + tail --pid=$$ auto-kill)
 
-set -e
-
 # ====================== CONFIGURACIÓN ======================
 PREVIEW_DIR="${FZF_PREVIEW_DIR:-$HOME/.config/zsh/preview}"
-TMP_DIR=$(mktemp -d /tmp/fzf-preview.XXXXXXXXXX)
+TMP_DIR=$(mktemp -d /tmp/fzf-preview.XXXXXXXXXX) || { echo "[fzf-preview] ERROR: no se pudo crear TMP_DIR" >&2; exit 1; }
 export FZF_STATE_FILE="$TMP_DIR/state"
 TMP_IMG="$TMP_DIR/preview"
 export UEBERZUG_FIFO=""
+
+# Cargar utilidades compartidas (incluye select_img_backend)
+source "$PREVIEW_DIR/common.sh"
 
 # Cache
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/fzf-preview"
 mkdir -p "$CACHE_DIR"
 
-# Elegir backend de imagen
-# Orden de preferencia: kitten (kitty/ghostty nativo, m'axima calidad) '→'
-# ueberzugpp (alta calidad, daemon persistente) '→' chafa (fallback texto Unicode) '→'
-# catimg (ASCII) '→' gen'erico (file)
-# NOTA: Verificamos que kitten funcione realmente, no solo la variable de entorno
-if [[ -n "$KITTY_WINDOW_ID" || -n "$GHOSTTY_RESOURCES_DIR" ]] && command -v kitten >/dev/null 2>&1; then
-    # Verificar que kitten icat realmente funciona (no falso positivo de KITTY_WINDOW_ID)
-    if kitten icat --clear --transfer-mode=memory --stdin=no --place="10x10@0x0" /dev/null 2>/dev/null; then
-        IMG_PREVIEW="kitty_preview"
-    elif command -v ueberzugpp >/dev/null 2>&1 || command -v ueberzug >/dev/null 2>&1; then
-        IMG_PREVIEW="ueberzug_preview"
-    elif command -v chafa >/dev/null 2>&1; then
-        IMG_PREVIEW="chafa_preview"
-    elif command -v catimg >/dev/null 2>&1; then
-        IMG_PREVIEW="catimg_preview"
-    else
-        IMG_PREVIEW="generic_preview"
-    fi
-elif command -v ueberzugpp >/dev/null 2>&1 || command -v ueberzug >/dev/null 2>&1; then
-    IMG_PREVIEW="ueberzug_preview"
-elif command -v chafa >/dev/null 2>&1; then
-    IMG_PREVIEW="chafa_preview"
-elif command -v catimg >/dev/null 2>&1; then
-    IMG_PREVIEW="catimg_preview"
-else
-    IMG_PREVIEW="generic_preview"  # solo file
-fi
+# Elegir backend de imagen (lógica centralizada en common.sh)
+IMG_PREVIEW=$(select_img_backend)
 export IMG_PREVIEW
 
 # ====================== INICIAR DAEMON UEBERZUGPP (si aplica) ======================

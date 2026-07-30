@@ -57,8 +57,7 @@ cache_put() {
 ueberzug_preview() {
     local file="$1"
     [[ -z "$UEBERZUG_FIFO" || ! -p "$UEBERZUG_FIFO" ]] && {
-        # Sin FIFO, fallback a chafa
-        chafa_preview "$file"
+        generic_preview "$file"
         return
     }
     echo '{"action": "add", "identifier": "fzf", "x": '"${FZF_PREVIEW_LEFT:-0}"', "y": '"${FZF_PREVIEW_TOP:-0}"', "max_width": '"${FZF_PREVIEW_COLUMNS:-80}"', "max_height": '"${FZF_PREVIEW_LINES:-24}"', "path": "'"$file"'"}' \
@@ -70,22 +69,12 @@ ueberzug_preview() {
 kitty_preview() {
     local file="$1"
     command -v kitten >/dev/null 2>&1 || {
-        chafa_preview "$file"
+        generic_preview "$file"
         return
     }
     kitten icat --clear --transfer-mode=memory --unicode-placeholder --stdin=no \
         --place="${FZF_PREVIEW_COLUMNS:-80}x${FZF_PREVIEW_LINES:-24}@${FZF_PREVIEW_LEFT:-0}x${FZF_PREVIEW_TOP:-0}" \
         -- "$file" 2>/dev/null
-}
-
-# Backend chafa: texto Unicode con color
-chafa_preview() {
-    local file="$1"
-    command -v chafa >/dev/null 2>&1 || {
-        generic_preview "$file"
-        return
-    }
-    chafa -s "${FZF_PREVIEW_COLUMNS:-80}x${FZF_PREVIEW_LINES:-24}" --format=symbols -- "$file" 2>/dev/null
 }
 
 # Backend catimg: ASCII art

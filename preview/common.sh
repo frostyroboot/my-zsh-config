@@ -115,6 +115,25 @@ _log() {
     [[ "${FZF_PREVIEW_DEBUG:-0}" == "1" ]] && echo "[fzf-preview] $*" >&2
 }
 
+# ====================== SELECCIÓN DE BACKEND DE IMAGEN ======================
+# Orden de preferencia: kitten (kitty/ghostty nativo) → ueberzugpp → catimg → genérico
+# Retorna el nombre de la función de backend a usar (definida en fz-file2preview.sh)
+select_img_backend() {
+    if command -v kitten >/dev/null 2>&1; then
+        echo "kitty_preview"
+        return
+    fi
+    if command -v ueberzugpp >/dev/null 2>&1 || command -v ueberzug >/dev/null 2>&1; then
+        echo "ueberzug_preview"
+        return
+    fi
+    if command -v catimg >/dev/null 2>&1; then
+        echo "catimg_preview"
+        return
+    fi
+    echo "generic_preview"
+}
+
 # Nota: NO usar `export -f` (no es válido en zsh).
 # Este archivo es sourced por preview.sh (bash) donde las funciones
 # quedan automáticamente disponibles en el subshell bash.

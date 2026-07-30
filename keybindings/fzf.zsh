@@ -9,27 +9,34 @@ export FZF_PREVIEW_WRAPPER="${FZF_PREVIEW_DIR:-$ZSH_CONFIG/preview}/fz-wrapper.s
 # FZF_ALT_C_COMMAND están definidas. Usamos widgets personalizados para
 # tener control total: ^F para archivos, ^T para directorios.
 
-# Ctrl-F: seleccionar archivo(s) y pegar al prompt
+# Ctrl-F: seleccionar archivo(s) e insertar en la posición del cursor
 fz_file_widget() {
-    local selected
+    local selected query left
+    # Extraer solo la palabra bajo el cursor como query inicial de fzf
+    query="${LBUFFER:0:$CURSOR}"
+    query="${query##* }"
+    # Guardar la parte izquierda (sin la palabra que vamos a reemplazar)
+    left="${LBUFFER:0:$((CURSOR - ${#query}))}"
     # Capturar stdout, tomar última línea, limpiar TODAS las escape sequences (CSI, OSC, APC, kitty)
-    selected="$($FZF_PREVIEW_WRAPPER < <(fd -t f --hidden . "$HOME" 2>/dev/null) --query="$LBUFFER" --select-1 --exit-0 -m 2>/dev/null | tail -n1 | sed -E 's/\x1b[][()P\\^_][^[:cntrl:]]*([\x07\x1b\\]|\x1b\\)//g')"
+    selected="$($FZF_PREVIEW_WRAPPER < <(fd -t f --hidden --exclude .git . "$HOME" 2>/dev/null) --query="$query" --select-1 --exit-0 -m 2>/dev/null | tail -n1 | sed -E 's/\x1b[][()P\\^_][^[:cntrl:]]*([\x07\x1b\\]|\x1b\\)//g')"
     local ret=$?
     if [[ $ret -eq 0 && -n "$selected" ]]; then
-        LBUFFER="$selected"
+        # Insertar en la posición del cursor (reemplaza solo la palabra bajo el cursor)
+        local inserted="${(q)selected}"
+        LBUFFER="${left}${inserted}${LBUFFER:$CURSOR}"
+        CURSOR=$(( ${#left} + ${#inserted} ))
     fi
     zle reset-prompt
 }
 zle -N fz_file_widget
 bindkey '^F' fz_file_widget
 
-# Ctrl-T: seleccionar directorio y pegar `cd <dir>` al prompt
+# Ctrl-T: seleccionar directorio y hacer cd automáticamente
 fz_cd_widget() {
     local selected
-    selected="$($FZF_PREVIEW_WRAPPER < <(fd -t d --hidden . "$HOME" 2>/dev/null) 2>/dev/null | tail -n1 | sed -E 's/\x1b[][()P\\^_][^[:cntrl:]]*([\x07\x1b\\]|\x1b\\)//g')"
-    local ret=$?
-    if [[ $ret -eq 0 && -n "$selected" ]]; then
-        LBUFFER="cd ${(q)selected}"
+    selected="$($FZF_PREVIEW_WRAPPER < <(fd -t d --hidden --exclude .git . "$HOME" 2>/dev/null) 2>/dev/null | tail -n1 | sed -E 's/\x1b[][()P\\^_][^[:cntrl:]]*([\x07\x1b\\]|\x1b\\)//g')"
+    if [[ -n "$selected" ]]; then
+        builtin cd "$selected"
     fi
     zle reset-prompt
 }
