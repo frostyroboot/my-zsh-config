@@ -104,7 +104,7 @@ generic_preview() {
 }
 
 # ====================== HANDLERS POR TIPO ======================
-# Imagen: auto-orient + resize, cache
+# Imagen: auto-orient + resize, cache (SÍNCRONO - renderiza en 1ra pasada)
 preview_image() {
     local file="$1"
     local cached
@@ -129,7 +129,7 @@ preview_image() {
     fi
 }
 
-# Video: thumbnail con ffmpegthumbnailer, cache
+# Video: thumbnail con ffmpegthumbnailer/ffmpeg, cache + generación en segundo plano
 preview_video() {
     local file="$1"
     local cached
@@ -137,25 +137,40 @@ preview_video() {
         $IMG_PREVIEW "$cached"
         return
     fi
-    if ! command -v ffmpegthumbnailer >/dev/null 2>&1; then
-        # Fallback: ffmpeg directo (sin seek, compatible con todos los videos)
-        if command -v ffmpeg >/dev/null 2>&1; then
-            ffmpeg -y -i "$file" -vframes 1 -q:v 2 -loglevel error "$TMP_IMG.jpg" 2>/dev/null
-        else
-            ffprobe -hide_banner -v error -show_format -show_streams -print_format flat "$file" 2>/dev/null | head -40
-            return
+    
+    # CACHÉ MISS: Mostrar info inmediata (no bloqueante) y lanzar generación en background
+    # 1. Info ligera instantánea para que el usuario vea algo ya
+    if command -v ffprobe >/dev/null 2>&1; then
+        ffprobe -hide_banner -v error -show_format -show_streams -print_format flat "$file" 2>/dev/null | head -30
+    else
+        file -- "$file"
+    fi
+    
+    # 2. Generar thumbnail en SEGUNDO PLANO (no bloquea fzf)
+    #    Se guarda directo en CACHE_DIR para que la próxima vez aparezca al instante
+    {
+        local key
+        key=$(cache_key "$file")
+        local dest="$CACHE_DIR/${key}.jpg"
+        # Usar directorio del TMP_IMG para thumbnails temporales
+        local tmp_dir="${TMP_IMG%/*}"
+        local tmp_thumb="$tmp_dir/thumb_${key}.jpg"
+        
+        # Evitar generar si ya hay otro proceso haciéndolo para este archivo
+        [[ -f "$dest" ]] && exit 0
+        
+        if command -v ffmpegthumbnailer >/dev/null 2>&1; then
+            ffmpegthumbnailer -i "$file" -o "$tmp_thumb" -s 1080 -m 2>/dev/null
+        elif command -v ffmpeg >/dev/null 2>&1; then
+            ffmpeg -y -i "$file" -vframes 1 -q:v 2 -loglevel error "$tmp_thumb" 2>/dev/null
         fi
-    else
-        ffmpegthumbnailer -i "$file" -o "$TMP_IMG.jpg" -s 1080 -m 2>/dev/null
-    fi
-    if [[ -s "$TMP_IMG.jpg" ]]; then
-        local cached_path
-        cached_path=$(cache_put "$file" "$TMP_IMG.jpg" 2>/dev/null) || echo "$TMP_IMG.jpg"
-        $IMG_PREVIEW "$cached_path"
-        rm -f "$TMP_IMG.jpg"
-    else
-        ffprobe -hide_banner -v error -show_format "$file" 2>/dev/null | head -20
-    fi
+        
+        # Mover a caché atómicamente si se generó
+        if [[ -s "$tmp_thumb" ]]; then
+            mkdir -p "$CACHE_DIR"
+            mv "$tmp_thumb" "$dest" 2>/dev/null
+        fi
+    } &> /dev/null &
 }
 
 # PDF: primera página como thumbnail
