@@ -12,8 +12,11 @@ export FZF_PREVIEW_WRAPPER="${FZF_PREVIEW_DIR:-$ZSH_CONFIG/preview}/fz-wrapper.s
 # Ctrl-F: seleccionar archivo(s) y pegar al prompt
 fz_file_widget() {
     local selected
-    selected="$($FZF_PREVIEW_WRAPPER < <(fd -t f . 2>/dev/null) --query="$LBUFFER" --select-1 --exit-0 -m)"
-    LBUFFER="$selected"
+    selected="$($FZF_PREVIEW_WRAPPER < <(fd -t f . 2>/dev/null) --query="$LBUFFER" --select-1 --exit-0 -m 2>/dev/null)"
+    local ret=$?
+    if [[ $ret -eq 0 && -n "$selected" ]]; then
+        LBUFFER="$selected"
+    fi
     zle reset-prompt
 }
 zle -N fz_file_widget
@@ -22,8 +25,11 @@ bindkey '^F' fz_file_widget
 # Ctrl-T: seleccionar directorio y pegar `cd <dir>` al prompt
 fz_cd_widget() {
     local selected
-    selected="$($FZF_PREVIEW_WRAPPER < <(fd -t d --hidden --follow --exclude .git))"
-    LBUFFER="cd ${(q)selected}"
+    selected="$($FZF_PREVIEW_WRAPPER < <(fd -t d --hidden --follow --exclude .git) 2>/dev/null)"
+    local ret=$?
+    if [[ $ret -eq 0 && -n "$selected" ]]; then
+        LBUFFER="cd ${(q)selected}"
+    fi
     zle reset-prompt
 }
 zle -N fz_cd_widget
