@@ -1,12 +1,6 @@
 # aliases/init.zsh
 # Carga todos los aliases
 
-# Carga todos los aliases
-
-set +e
-
 for file in "$ZSH_CONFIG/aliases"/*.zsh(N); do
-    [[ "${file:t}" != "init.zsh" ]] && source "$file"
+    [[ "${file:t}" != "init.zsh" ]] && source_file "$file" || true
 done
-
-true

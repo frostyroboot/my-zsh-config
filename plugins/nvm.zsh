@@ -1,4 +1,8 @@
 export NVM_DIR="$HOME/.nvm"
 
-[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"
+[[ -s "$NVM_DIR/nvm.sh" ]] || return 0
+
+nvm()  { unset -f nvm node npm npx 2>/dev/null; source "$NVM_DIR/nvm.sh"; nvm "$@"; }
+node() { unset -f nvm node npm npx 2>/dev/null; source "$NVM_DIR/nvm.sh"; node "$@"; }
+npm()  { unset -f nvm node npm npx 2>/dev/null; source "$NVM_DIR/nvm.sh"; npm "$@"; }
+npx()  { unset -f nvm node npm npx 2>/dev/null; source "$NVM_DIR/nvm.sh"; npx "$@"; }
