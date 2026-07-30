@@ -13,7 +13,7 @@ export FZF_PREVIEW_WRAPPER="${FZF_PREVIEW_DIR:-$ZSH_CONFIG/preview}/fz-wrapper.s
 fz_file_widget() {
     local selected
     # Capturar stdout, tomar última línea, limpiar TODAS las escape sequences (CSI, OSC, APC, kitty)
-    selected="$($FZF_PREVIEW_WRAPPER < <(fd -t f . "$HOME" 2>/dev/null) --query="$LBUFFER" --select-1 --exit-0 -m 2>/dev/null | tail -n1 | sed -E 's/\x1b[][()P\\^_][^[:cntrl:]]*([\x07\x1b\\]|\x1b\\)//g')"
+    selected="$($FZF_PREVIEW_WRAPPER < <(fd -t f --hidden . "$HOME" 2>/dev/null) --query="$LBUFFER" --select-1 --exit-0 -m 2>/dev/null | tail -n1 | sed -E 's/\x1b[][()P\\^_][^[:cntrl:]]*([\x07\x1b\\]|\x1b\\)//g')"
     local ret=$?
     if [[ $ret -eq 0 && -n "$selected" ]]; then
         LBUFFER="$selected"
@@ -26,7 +26,7 @@ bindkey '^F' fz_file_widget
 # Ctrl-T: seleccionar directorio y pegar `cd <dir>` al prompt
 fz_cd_widget() {
     local selected
-    selected="$($FZF_PREVIEW_WRAPPER < <(fd -t d . "$HOME" 2>/dev/null) 2>/dev/null | tail -n1 | sed -E 's/\x1b[][()P\\^_][^[:cntrl:]]*([\x07\x1b\\]|\x1b\\)//g')"
+    selected="$($FZF_PREVIEW_WRAPPER < <(fd -t d --hidden . "$HOME" 2>/dev/null) 2>/dev/null | tail -n1 | sed -E 's/\x1b[][()P\\^_][^[:cntrl:]]*([\x07\x1b\\]|\x1b\\)//g')"
     local ret=$?
     if [[ $ret -eq 0 && -n "$selected" ]]; then
         LBUFFER="cd ${(q)selected}"
