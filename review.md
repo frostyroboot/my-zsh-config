@@ -25,9 +25,9 @@ de teclado. El resto son mejoras menores / portabilidad Fedora.
 
 ## Correctness Issues
 
-### 🔴 Crítico
+### ✅ Resuelto (commit dc4ec86)
 
-1. **`preview/fz-wrapper.sh:67-70` — fzf no reenvía `"$@"`**
+1. **`preview/fz-wrapper.sh` — fzf ahora reenvía `"$@"`** (fix aplicado).
    - **Qué está mal:** la invocación final de fzf es fija:
      `fzf --reverse --preview "..." --bind ... --bind ...`
      y **no incluye `"$@"`**. Todos los argumentos que los callers pasan (fe, fl,
@@ -141,9 +141,9 @@ despachador, y un smoke test de carga de `zshrc`.
 
 ## Verdict
 
-`request changes` — por el defecto crítico #1 (el wrapper no reenvía `"$@"`),
-que rompe funcionalidad documentada (`fe`, `fl`, `fkill`, widgets). El resto de
-la configuración es sólida y pasa validación de sintaxis/carga.
+`pass with warnings` — el defecto crítico del wrapper (no reenviar `"$@"`) fue
+corregido en el commit dc4ec86. Quedan mejoras menores (portabilidad Fedora,
+consistencia epub/archive en `detect_type`, `pkill` global, sin tests).
 
 ## Next Steps
 
