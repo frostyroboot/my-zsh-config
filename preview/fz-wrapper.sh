@@ -64,7 +64,7 @@ echo "file" > "$FZF_STATE_FILE"
 # ====================== EJECUTAR FZF ======================
 # NO usar exec fzf (perderíamos el trap)
 # fzf se ejecuta como subproceso normal; cuando sale, el trap se ejecuta
-fzf --reverse \
+fzf --reverse "$@" \
     --preview "$PREVIEW_DIR/fz-file2preview.sh {} \"$IMG_PREVIEW\" \"$CACHE_DIR\" \"$TMP_IMG\" \"$UEBERZUG_FIFO\"" \
     --bind 'resize:refresh-preview' \
     --bind 'focus,load:transform-header:file --brief {}'

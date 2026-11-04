@@ -21,13 +21,20 @@ detect_type() {
     local mime
     mime=$(file --brief --dereference --mime-type -- "$file" 2>/dev/null)
     case "$mime" in
-        image/*)        echo "image" ;;
-        video/*)        echo "video" ;;
-        audio/*)        echo "audio" ;;
-        application/pdf) echo "pdf" ;;
-        application/json) echo "json" ;;
-        text/markdown)  echo "markdown" ;;
-        text/*)         echo "text" ;;
+        image/*)                 echo "image" ;;
+        video/*)                 echo "video" ;;
+        audio/*)                 echo "audio" ;;
+        application/pdf)         echo "pdf" ;;
+        application/json)        echo "json" ;;
+        application/epub+zip)    echo "epub" ;;
+        text/markdown)           echo "markdown" ;;
+        text/*)
+            # Markdown con MIME genérico: detectar por extensión
+            case "${file:l}" in
+                *.md|*.markdown) echo "markdown" ;;
+                *)               echo "text" ;;
+            esac
+            ;;
         application/zip|application/x-tar|application/x-bzip2|application/x-xz|application/gzip|application/x-7z-compressed|application/x-rar|application/vnd.rar)
                         echo "archive" ;;
         application/octet-stream|inode/x-empty)
@@ -53,6 +60,8 @@ detect_type_by_ext() {
             echo "audio" ;;
         # PDFs
         *.pdf) echo "pdf" ;;
+        # EPUB
+        *.epub) echo "epub" ;;
         # Markdown
         *.md|*.markdown) echo "markdown" ;;
         # JSON
