@@ -128,12 +128,22 @@ _log() {
 # Orden de preferencia: kitten (kitty/ghostty nativo) → ueberzugpp → catimg → genérico
 # Retorna el nombre de la función de backend a usar (definida en fz-file2preview.sh)
 select_img_backend() {
-    if command -v kitten >/dev/null 2>&1; then
+    # Termux: no kitten/ueberzugpp; prefer chafa/catimg/generic.
+    local is_termux=0
+    if [[ -n "${TERMUX_VERSION:-}" || -d "/data/data/com.termux" ]]; then
+        is_termux=1
+    fi
+
+    if [[ "$is_termux" -eq 0 ]] && command -v kitten >/dev/null 2>&1; then
         echo "kitty_preview"
         return
     fi
-    if command -v ueberzugpp >/dev/null 2>&1 || command -v ueberzug >/dev/null 2>&1; then
+    if [[ "$is_termux" -eq 0 ]] && { command -v ueberzugpp >/dev/null 2>&1 || command -v ueberzug >/dev/null 2>&1; }; then
         echo "ueberzug_preview"
+        return
+    fi
+    if command -v chafa >/dev/null 2>&1; then
+        echo "chafa_preview"
         return
     fi
     if command -v catimg >/dev/null 2>&1; then

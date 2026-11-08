@@ -87,6 +87,16 @@ catimg_preview() {
     catimg -r 2 -w $((2 * ${FZF_PREVIEW_COLUMNS:-80})) "$file" 2>/dev/null
 }
 
+# Backend chafa: bloques Unicode con color
+chafa_preview() {
+    local file="$1"
+    command -v chafa >/dev/null 2>&1 || {
+        generic_preview "$file"
+        return
+    }
+    chafa --size "${FZF_PREVIEW_COLUMNS:-80}x${FZF_PREVIEW_LINES:-24}" "$file" 2>/dev/null
+}
+
 # Fallback: solo file
 generic_preview() {
     file -- "$1"

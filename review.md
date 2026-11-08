@@ -1,152 +1,153 @@
 # Code Review — Configuración Zsh (review.md)
 
-Fecha: 2026-11-04
+Fecha: 2026-11-07
 Rama: develop
 Directorio: /home/sebas/.config/zsh
 
 ## Resumen ejecutivo
 
-La configuración es modular y bien estructurada (carga por módulos con `load_module`,
-helpers `source_file`/`load_module`, separación `init/plugins/preview/core/functions/
-aliases/keybindings/tools`). La integración de fzf + preview (ueberzugpp/kitty) está
-mayormente implementada y los archivos pasan validación de sintaxis. Se detectó un
-defecto funcional relevante en el orquestador `fz-wrapper.sh` que ignora los
-argumentos pasados por sus callers, degradando `fe`, `fl`, `fkill` y los widgets
-de teclado. El resto son mejoras menores / portabilidad Fedora.
+Configuración modular y bien estructurada (carga por módulos con `load_module`,
+helpers `source_file`/`load_module`, separación por dominios). La integración
+fzf + preview (kitty/kitten por defecto, con fallback ueberzugpp/catimg) está
+implementada y los archivos pasan validación de sintaxis. El defecto crítico del
+wrapper (no reenviar `"$@"` a fzf) ya está corregido en `dc4ec86`, por lo que
+`fe`, `fl`, `fkill` y los widgets vuelven a respetar sus opciones. Quedan
+mejoras menores/medias (multi-selección en widgets, `pkill` global en cleanup,
+robustez ante rutas con espacios, colisiones de caché). No hay suite de tests.
 
 ## Plan Compliance (llm_files/plan.md)
 
 | # | Tarea del plan | Estado | Notas |
 |---|----------------|--------|-------|
-| 1 | Restaurar `fz-wrapper.sh` y `fz-file2preview.sh` desde `preview/.bak/` y `chmod +x` | ✅ implemented | No existe `preview/.bak/` en el árbol actual, pero ambos archivos existen en `preview/` y son ejecutables (`-rwxr-xr-x`). Resultado equivalente. |
-| 2 | Sincronizar despachador en `fz-file2preview.sh` para tipos cortos de `detect_type` | ✅ implemented | `case "$TYPE"` cubre `image/video/audio/pdf/json/markdown/epub/archive/text/binary` y hay guard `[[ -d "$FILE" ]]`. Quedan inconsistencias menores (ver issues). |
+| 1 | Restaurar `fz-wrapper.sh` y `fz-file2preview.sh` desde `preview/.bak/` y `chmod +x` | ✅ implemented | No existe `preview/.bak/` en el árbol, pero ambos archivos existen en `preview/` y son ejecutables (`-rwxr-xr-x`). Resultado equivalente. `common.sh` no es ejecutable (correcto: se hace `source`). |
+| 2 | Sincronizar despachador en `fz-file2preview.sh` para tipos cortos de `detect_type` | ✅ implemented | El `case "$TYPE"` cubre `image/video/audio/pdf/json/markdown/epub/archive/text/binary` y hay guard `[[ -d "$FILE" ]]`. Quedan inconsistencias menores (epub/archive en MIME vs extensión, ver issues). |
 | 3 | Cambiar `precmd_functions+=(_preview_shell_exit)` por `zshexit_functions+=(_preview_shell_exit)` en `preview/init.zsh` | ✅ implemented | Línea 66: `zshexit_functions+=(_preview_shell_exit)` con guard `_PREVIEW_TRAP_INSTALLED`. |
 | 4 | Verificar funcionamiento y limpieza del sistema | ⚠️ partial | No hay evidencia de verificación automatizada/documentada. Se realizaron pruebas manuales de sintaxis y carga (ver Test Results). |
 
 ## Correctness Issues
 
-### ✅ Resuelto (commit dc4ec86)
-
-1. **`preview/fz-wrapper.sh` — fzf ahora reenvía `"$@"`** (fix aplicado).
-   - **Qué está mal:** la invocación final de fzf es fija:
-     `fzf --reverse --preview "..." --bind ... --bind ...`
-     y **no incluye `"$@"`**. Todos los argumentos que los callers pasan (fe, fl,
-     fkill, widgets) son silenciosamente descartados.
-   - **Impacto:** `fe` ignora `--select-1 --exit-0` (no auto-selecciona ni sale
-     sin coincidencias); `fl` ignora `--ansi` (los colores de eza se muestran
-     como secuencias de escape); `fkill` ignora `--header`; los widgets ignoran
-     `--query`, `--select-1`, `--exit-0`, `-m`.
-   - **Esperado (plan/código):** el wrapper debe actuar como orquestador y pasar
-     las opciones adicionales a fzf.
-   - **Fix sugerido:** `fzf --reverse "$@" --preview "$PREVIEW_DIR/..." ...`
-
 ### 🟡 Medio
 
-2. **`plugins/fzf.zsh:1` — ruta de completion inexistente en Fedora**
-   - **Qué está mal:** `source /usr/share/fzf/completion.zsh` no existe en este
-     sistema (los archivos de fzf están en `/usr/share/fzf/shell/` y no hay
-     `completion.zsh`).
-   - **Impacto:** la línea falla silenciosamente por el `&&`; sin autocompletado
-     del comando `fzf`. No rompe la carga.
-   - **Fix sugerido:** usar `/usr/share/fzf/shell/key-bindings.zsh` si se quiere
-     keybindings de fzf, o eliminar la línea (los widgets son propios).
+1. **`keybindings/fzf.zsh:21` — multi-selección descartada en `fz_file_widget`**
+   - **Qué está mal:** el widget pasa `-m` a fzf (multi-select) pero luego hace
+     `tail -n1`, conservando solo la última selección. Las demás se descartan.
+   - **Impacto:** seleccionar varios archivos con Ctrl-F inserta solo el último.
+   - **Fix sugerido:** capturar todas las líneas seleccionadas y unirlas (p. ej.
+     `mapfile`/`read -r` en un array) insertando rutas separadas por espacio.
 
-3. **`preview/fz-file2preview.sh:325-332` — despachador inconsistente con `detect_type`**
-   - **Qué está mal:** el fallback por extensión maneja `*.epub` y archivos
-     comprimidos, pero `detect_type`/`detect_type_by_ext` (common.sh) nunca
-     devuelve `"epub"` ni `"archive"` para todos los casos (p. ej. epub no está
-     en la lista de extensiones; octet-stream cae en `detect_type_by_ext` que
-     no lista epub). El caso `"archive"` del despachador depende de que
-     `detect_type` devuelva `"archive"`, lo cual solo ocurre para MIME conocidos.
-   - **Impacto:** epubs se tratan como binarios (fallback `file`) en la práctica.
-   - **Fix sugerido:** añadir `*.epub` y las extensiones de archivo a
-     `detect_type_by_ext` en `common.sh`.
-
-4. **`preview/fz-file2preview.sh:113-116` — manejo de fallo de `cache_put`**
-   - **Qué está mal:** `cached_path=$(cache_put ...) || echo "$thumb"` hace que,
-     si `cache_put` falla, el `echo` imprima la ruta al stdout (contaminando
-     el preview) y `cached_path` quede vacío, invocando `$IMG_PREVIEW ""`.
-   - **Fix sugerido:** `cached_path=$(cache_put ...) || cached_path="$thumb"`.
-
-5. **`preview/cleanup:7` — `pkill -f "ueberzugpp layer"` global**
+2. **`preview/cleanup:7` — `pkill -f "ueberzugpp layer"` global**
    - **Qué está mal:** al salir de una shell se matan los daemons de *todas* las
-     shells/sesiones del usuario.
+     sesiones del usuario.
    - **Impacto:** efecto colateral si se usan múltiples terminales.
-   - **Fix sugerido:** guardar el PID del daemon propio y matar solo ese.
+   - **Fix sugerido:** guardar el PID del daemon propio y matar solo ese; o usar
+     `pgrep` filtrado por PID del wrapper.
 
-6. **`functions/fzf.zsh:29` — `fl()` pasa `--ansi` que se descarta (consecuencia de #1)**
-   - Se resuelve con el fix #1.
+3. **`preview/fz-wrapper.sh:68` — rutas con espacios en el ítem seleccionado**
+   - **Qué está mal:** el comando de preview inserta `{}` sin comillas:
+     `fz-file2preview.sh {} "..."`. Si el archivo seleccionado tiene espacios,
+     fzf lo pasa sin escapar y el shell del preview lo parte.
+   - **Impacto:** previews fallan para rutas con espacios.
+   - **Fix sugerido:** usar la plantilla entre comillas en el comando de preview
+     (p. ej. `fz-file2preview.sh "{}" ...`) o validar/escapar en el wrapper.
+
+4. **`preview/fz-file2preview.sh:148-149` — check no atómico en generación de
+   thumbnails de video**
+   - **Qué está mal:** `[[ -f "$dest" ]] && exit 0` no es atómico; dos procesos
+     pueden generar el mismo thumbnail a la vez.
+   - **Impacto:** trabajo duplicado / posibles colisiones al mover `mv`.
+   - **Fix sugerido:** usar `flock` o un archivo lock por clave, o `mkdir` atómico.
 
 ### 🟢 Menor / Nits
 
-7. **`init/path.zsh:9` — sin newline final** (minor, estilo).
+5. **`preview/common.sh` (`cache_key` en `fz-file2preview.sh:34-44`) — clave solo
+   `mtime_size`**. Colisiones posibles entre archivos distintos con mismo
+   mtime+tamaño. Añadir inode/nombre para reducir riesgo.
 
-8. **`preview/common.sh:27-30` — markdown solo si MIME es `text/markdown`**.
-   La mayoría de `.md` se detecta como `text/plain` → `text`, así que se usan
-   con `bat` en lugar de `glow`. Funcional, pero `preview_markdown` rara vez se
-   invoca. Mejora opcional.
+6. **`preview/fz-file2preview.sh:106-117` — `rm -f "$thumb"` tras preview**.
+   Si el backend lee de forma asíncrona (kitten transfer-mode), podría leer un
+   archivo ya borrado. Verificar que el backend sea síncrono o diferir la limpieza.
 
-9. **`preview/fz-file2preview.sh:65` — `exit 1` en `ueberzug_preview`**.
-   Con backend kitty (el seleccionado aquí) no se usa; con ueberzug, un exit
-   code 1 puede ser interpretado por fzf como fallo del comando de preview.
-   Considerar `return 0` tras escribir al FIFO.
+7. **`preview/fz-file2preview.sh:113` (`preview_image`) — fallback `cp "$file"`**
+   puede copiar imágenes enormes al directorio temporal si `magick` falla.
+   Aceptable, pero conviene limitar por `is_too_large`.
 
-10. **`preview/fz-file2preview.sh:149` — race en generación de thumbnails de video**:
-    comprobación `[[ -f "$dest" ]]` no atómica; dos procesos pueden generar a la
-    vez. Impacto bajo.
+8. **`plugins/fzf.zsh` — completion path** ya corregido a `/usr/share/fzf/shell/`;
+   solo existe `key-bindings.zsh` (no `completion.zsh`). La línea es inofensiva
+   (guard `[[ -r ]]`), pero puede eliminarse para claridad.
 
-11. **`preview/fz-file2preview.sh:19-28` — clave de caché solo `mtime_size`**:
-    colisiones entre archivos distintos con mismo mtime+tamaño. Impacto bajo.
+9. **`preview/init.zsh` (`_add_opt_if_missing`)** usa coincidencia por subcadena;
+   podría saltarse opciones legítimas si el nombre aparece dentro de otra
+   (`--border` vs `--border-label`). Impacto bajo.
 
-12. **`keybindings/fzf.zsh:21` — limpieza de escape sequences** con `sed` puede no
-    cubrir todos los casos (APC/kitty). Funciona en la práctica; mantener.
+10. **`preview/fz-wrapper.sh:62` — `FZF_STATE_FILE` escrito pero no consumido**
+    en ningún otro archivo. Código muerto; limpiar o usar.
 
-13. **`core/ohmyzsh.zsh:6` — `plugins=(git zsh-syntax-highlighting)`** requiere
-    el plugin OMZ instalado (presente). Verificado OK.
+11. **`preview/fz-file2preview.sh` (`ueberzug_preview`) — `exit 0`** es correcto
+    (no contamina stdout). Se mantiene.
+
+12. **`functions/fzf.zsh:18` (`fe`)** usa `--select-1 --exit-0`; con el wrapper
+    corregido ya funciona. Sin acción.
+
+### ✅ Resueltos respecto a revisiones anteriores
+
+- `preview/fz-wrapper.sh` ahora reenvía `"$@"` a fzf (`fzf --reverse "$@"`).
+- `preview/fz-file2preview.sh` usa `cached_path=... || cached_path="$thumb"`
+  (sin `echo` contaminando stdout).
+- `init/path.zsh` termina con newline.
+- `detect_type` cubre epub/archive por MIME y por extensión.
 
 ## Test Results
 
 - `zsh -n` sobre todos los `*.zsh`: ✅ PASS (0 errores) — 21 archivos.
-- `bash -n` sobre `preview/*.sh` y `preview/cleanup`: ✅ PASS.
-- Carga interactiva: `zsh -i -c '...'` → ✅ `INTERACTIVE_OK`, widgets y
-  funciones disponibles (`fe`, `fz_file_widget`), `FZF_DEFAULT_OPTS` poblado.
+- `bash -n` sobre `preview/*.sh` y `preview/cleanup`: ✅ PASS (4 archivos).
+- Carga interactiva: `zsh -i -c '...'` → ✅ `INTERACTIVE_OK`; funciones/widget
+  disponibles (`fe`, `fcd`, `fl`, `fkill`, `fz_file_widget`, `fz_cd_widget`);
+  `FZF_DEFAULT_OPTS` poblado.
 - `source` no interactivo de `zshrc`: ✅ `SOURCED_OK`.
-- `preview/common.sh`: `detect_type`, `is_too_large`, `select_img_backend`
-  (devuelve `kitty_preview`) → ✅.
-- `preview/fz-file2preview.sh` sobre un `.md`: produce salida (bat) → ✅ (exit 0
-  con stdout redirigido; exit 1 observado en terminal por bat/color, sin impacto).
-- Dependencias presentes: kitten, magick, pdftoppm, ffmpeg, jq, chafa, fzf, fd,
-  eza, bat. Ausentes: ueberzugpp, ffmpegthumbnailer, glow, mediainfo, epub-thumbnailer
-  (el código hace fallback adecuado).
+- `preview/common.sh`: `detect_type` probado para md/json/bin/directory/epub/zip/
+  mp4/pdf → tipos correctos; `select_img_backend` → `kitty_preview` (kitten
+  presente, ueberzugpp ausente).
+- `preview/fz-file2preview.sh` sobre `.txt` y `.md`: salida correcta (bat),
+  exit 0.
+- `preview/cleanup`: exit 0, sin errores.
+- Dependencias presentes: zsh, fzf, fd, eza, bat, starship, atuin, kitten,
+  magick, pdftoppm, ffmpeg, ffprobe, jq, chafa, tree, pnpm.
+- Dependencias ausentes (fallbacks adecuados): ueberzugpp, ueberzug, ffmpeg-
+  thumbnailer, glow, mediainfo, catimg, nvm. El código degrada correctamente.
 
 ## Missing Test Coverage
 
 No existe suite de tests. Lógica sin cobertura:
-- `fz-wrapper.sh` (ciclo de vida del daemon, trap, cleanup).
-- `fz-file2preview.sh` (despacho por tipo, caché, backends).
-- Widgets `fz_file_widget` / `fz_cd_widget` (extracción de query, inserción).
-- `cache_key` / `cache_get` / `cache_put`.
+- `fz-wrapper.sh` (ciclo de vida del daemon, trap, cleanup, caché pruning).
+- `fz-file2preview.sh` (despacho por tipo, caché get/put, backends).
+- Widgets `fz_file_widget` / `fz_cd_widget` (extracción de query, inserción,
+  cancelación).
+- `cache_key` / `cache_get` / `cache_put` (colisiones, fallos de cp).
+- `detect_type` / `detect_type_by_ext` (MIME vs extensión, symlinks).
 - nvm lazy wrappers.
-- pnpm completion cache.
+- pnpm completion cache (`tools/pnpm.zsh`).
 
-Recomendación: añadir tests de shell (bats) al menos para `common.sh` y el
-despachador, y un smoke test de carga de `zshrc`.
+Recomendación: añadir tests de shell (bats/shunit2) al menos para `common.sh`
+y el despachador, más un smoke test de carga de `zshrc`.
 
 ## Unplanned / Scope
 
-- `tools/pnpm.zsh` (untracked) y el bloque pnpm añadido a `init/path.zsh`
-  (untracked) no figuran en `plan.md`. Son adiciones razonables (autocompletado
-  cacheado de pnpm), pero constituyen scope creep respecto al plan. Marcar como
-  `➕ unplanned`.
+- `tools/pnpm.zsh` y el bloque pnpm en `init/path.zsh` no figuran en `plan.md`.
+  Son adiciones razonables (autocompletado cacheado de pnpm), pero constituyen
+  scope creep respecto al plan. Marcar como `➕ unplanned`.
+- El backend por defecto es `kitty_preview` (kitten) y no ueberzugpp, por
+  ausencia de `ueberzugpp`; el código mantiene el camino ueberzugpp para cuando
+  esté instalado. Consistente con el plan (fallback).
 
 ## Verdict
 
-`pass with warnings` — el defecto crítico del wrapper (no reenviar `"$@"`) fue
-corregido en el commit dc4ec86. Quedan mejoras menores (portabilidad Fedora,
-consistencia epub/archive en `detect_type`, `pkill` global, sin tests).
+`approve with nits` — todas las tareas del plan están implementadas; el defecto
+crítico del wrapper fue corregido. Los issues restantes son mejoras de robustez
+(multi-selección en widgets, `pkill` global, rutas con espacios, colisiones de
+caché) y ausencia de tests, no bloquean el funcionamiento normal.
 
 ## Next Steps
 
 - Ejecutar agente **quality** para linting/formatting/análisis estático.
 - Ejecutar agente **security** para escaneo de vulnerabilidades y patrones.
-- Corregir issue #1 y, opcionalmente, #2–#5.
+- Opcional: corregir issues #1–#4 (medios) y añadir tests mínimos.
