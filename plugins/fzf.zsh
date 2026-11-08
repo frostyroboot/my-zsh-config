@@ -1,8 +1,6 @@
-[ -f /usr/share/fzf/key-bindings.zsh ] && source /usr/share/fzf/key-bindings.zsh
-[ -f /usr/share/fzf/completion.zsh ] && source /usr/share/fzf/completion.zsh
-
-export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
-
-# NOTA: FZF_DEFAULT_OPTS se construye en preview/init.zsh
-# Este archivo solo carga key-bindings y completion.
-
+# fzf shell helpers (optional): completion is autoloaded from
+# /usr/share/zsh/site-functions/_fzf on Fedora.
+for _fzf_helper in /usr/share/fzf/shell/key-bindings.zsh /usr/share/fzf/shell/completion.zsh; do
+    [[ -r "$_fzf_helper" ]] && source "$_fzf_helper"
+done
+unset _fzf_helper

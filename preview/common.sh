@@ -21,13 +21,20 @@ detect_type() {
     local mime
     mime=$(file --brief --dereference --mime-type -- "$file" 2>/dev/null)
     case "$mime" in
-        image/*)        echo "image" ;;
-        video/*)        echo "video" ;;
-        audio/*)        echo "audio" ;;
-        application/pdf) echo "pdf" ;;
-        application/json) echo "json" ;;
-        text/markdown)  echo "markdown" ;;
-        text/*)         echo "text" ;;
+        image/*)                 echo "image" ;;
+        video/*)                 echo "video" ;;
+        audio/*)                 echo "audio" ;;
+        application/pdf)         echo "pdf" ;;
+        application/json)        echo "json" ;;
+        application/epub+zip)    echo "epub" ;;
+        text/markdown)           echo "markdown" ;;
+        text/*)
+            # Markdown con MIME genérico: detectar por extensión
+            case "${file:l}" in
+                *.md|*.markdown) echo "markdown" ;;
+                *)               echo "text" ;;
+            esac
+            ;;
         application/zip|application/x-tar|application/x-bzip2|application/x-xz|application/gzip|application/x-7z-compressed|application/x-rar|application/vnd.rar)
                         echo "archive" ;;
         application/octet-stream|inode/x-empty)
@@ -53,6 +60,8 @@ detect_type_by_ext() {
             echo "audio" ;;
         # PDFs
         *.pdf) echo "pdf" ;;
+        # EPUB
+        *.epub) echo "epub" ;;
         # Markdown
         *.md|*.markdown) echo "markdown" ;;
         # JSON
@@ -113,6 +122,35 @@ preview_error() {
 # Log si está habilitado
 _log() {
     [[ "${FZF_PREVIEW_DEBUG:-0}" == "1" ]] && echo "[fzf-preview] $*" >&2
+}
+
+# ====================== SELECCIÓN DE BACKEND DE IMAGEN ======================
+# Orden de preferencia: kitten (kitty/ghostty nativo) → ueberzugpp → catimg → genérico
+# Retorna el nombre de la función de backend a usar (definida en fz-file2preview.sh)
+select_img_backend() {
+    # Termux: no kitten/ueberzugpp; prefer chafa/catimg/generic.
+    local is_termux=0
+    if [[ -n "${TERMUX_VERSION:-}" || -d "/data/data/com.termux" ]]; then
+        is_termux=1
+    fi
+
+    if [[ "$is_termux" -eq 0 ]] && command -v kitten >/dev/null 2>&1; then
+        echo "kitty_preview"
+        return
+    fi
+    if [[ "$is_termux" -eq 0 ]] && { command -v ueberzugpp >/dev/null 2>&1 || command -v ueberzug >/dev/null 2>&1; }; then
+        echo "ueberzug_preview"
+        return
+    fi
+    if command -v chafa >/dev/null 2>&1; then
+        echo "chafa_preview"
+        return
+    fi
+    if command -v catimg >/dev/null 2>&1; then
+        echo "catimg_preview"
+        return
+    fi
+    echo "generic_preview"
 }
 
 # Nota: NO usar `export -f` (no es válido en zsh).

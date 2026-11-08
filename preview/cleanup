@@ -4,7 +4,7 @@
 # Llamado automáticamente al logout por el orquestador
 
 # Matar todos los procesos ueberzugpp layer que estén corriendo
-pkill -f "ueberzugpp layer" 2>/dev/null
+pkill -f "[u]eberzugpp layer" 2>/dev/null
 
 # Eliminar FIFOs y directorios temporales huérfanos
 rm -rf /tmp/fzf-preview.* 2>/dev/null

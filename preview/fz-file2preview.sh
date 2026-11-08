@@ -57,35 +57,24 @@ cache_put() {
 ueberzug_preview() {
     local file="$1"
     [[ -z "$UEBERZUG_FIFO" || ! -p "$UEBERZUG_FIFO" ]] && {
-        # Sin FIFO, fallback a chafa
-        chafa_preview "$file"
+        generic_preview "$file"
         return
     }
     echo '{"action": "add", "identifier": "fzf", "x": '"${FZF_PREVIEW_LEFT:-0}"', "y": '"${FZF_PREVIEW_TOP:-0}"', "max_width": '"${FZF_PREVIEW_COLUMNS:-80}"', "max_height": '"${FZF_PREVIEW_LINES:-24}"', "path": "'"$file"'"}' \
         >> "$UEBERZUG_FIFO"
-    exit 1  # NO cachear
+    exit 0  # NO cachear
 }
 
 # Backend kitty/ghostty: usa kitten icat (nativo, alta calidad)
 kitty_preview() {
     local file="$1"
     command -v kitten >/dev/null 2>&1 || {
-        chafa_preview "$file"
+        generic_preview "$file"
         return
     }
     kitten icat --clear --transfer-mode=memory --unicode-placeholder --stdin=no \
         --place="${FZF_PREVIEW_COLUMNS:-80}x${FZF_PREVIEW_LINES:-24}@${FZF_PREVIEW_LEFT:-0}x${FZF_PREVIEW_TOP:-0}" \
         -- "$file" 2>/dev/null
-}
-
-# Backend chafa: texto Unicode con color
-chafa_preview() {
-    local file="$1"
-    command -v chafa >/dev/null 2>&1 || {
-        generic_preview "$file"
-        return
-    }
-    chafa -s "${FZF_PREVIEW_COLUMNS:-80}x${FZF_PREVIEW_LINES:-24}" --format=symbols -- "$file" 2>/dev/null
 }
 
 # Backend catimg: ASCII art
@@ -96,6 +85,16 @@ catimg_preview() {
         return
     }
     catimg -r 2 -w $((2 * ${FZF_PREVIEW_COLUMNS:-80})) "$file" 2>/dev/null
+}
+
+# Backend chafa: bloques Unicode con color
+chafa_preview() {
+    local file="$1"
+    command -v chafa >/dev/null 2>&1 || {
+        generic_preview "$file"
+        return
+    }
+    chafa --size "${FZF_PREVIEW_COLUMNS:-80}x${FZF_PREVIEW_LINES:-24}" "$file" 2>/dev/null
 }
 
 # Fallback: solo file
@@ -123,7 +122,7 @@ preview_image() {
     if [[ -f "$thumb" ]]; then
         # Cachear
         local cached_path
-        cached_path=$(cache_put "$file" "$thumb" 2>/dev/null) || echo "$thumb"
+        cached_path=$(cache_put "$file" "$thumb" 2>/dev/null) || cached_path="$thumb"
         $IMG_PREVIEW "$cached_path"
         rm -f "$thumb"
     fi
@@ -188,7 +187,7 @@ preview_pdf() {
     pdftoppm -singlefile -jpeg -r 100 -f 1 -l 1 "$file" "$TMP_IMG" 2>/dev/null
     if [[ -s "${TMP_IMG}.jpg" ]]; then
         local cached_path
-        cached_path=$(cache_put "$file" "${TMP_IMG}.jpg" 2>/dev/null) || echo "${TMP_IMG}.jpg"
+        cached_path=$(cache_put "$file" "${TMP_IMG}.jpg" 2>/dev/null) || cached_path="${TMP_IMG}.jpg"
         $IMG_PREVIEW "$cached_path"
         rm -f "${TMP_IMG}.jpg"
     else
@@ -209,7 +208,7 @@ preview_audio() {
     fi
     if [[ -s "$TMP_IMG.jpg" ]]; then
         local cached_path
-        cached_path=$(cache_put "$file" "$TMP_IMG.jpg" 2>/dev/null) || echo "$TMP_IMG.jpg"
+        cached_path=$(cache_put "$file" "$TMP_IMG.jpg" 2>/dev/null) || cached_path="$TMP_IMG.jpg"
         $IMG_PREVIEW "$cached_path"
         rm -f "$TMP_IMG.jpg"
     else

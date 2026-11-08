@@ -1,0 +1,40 @@
+# tool<TAB>profile<TAB>apt<TAB>dnf<TAB>pacman<TAB>pkg(termux)<TAB>fallback
+# profile: core | preview | dev | optional
+# fallback: none | binary | cargo | installer
+
+zsh	core	zsh	zsh	zsh	zsh	none
+git	core	git	git	git	git	none
+curl	core	curl	curl	curl	curl	none
+fzf	core	fzf	fzf	fzf	fzf	binary
+fd	core	fd-find	fd-find	fd	fd	binary
+ripgrep	core	ripgrep	ripgrep	ripgrep	ripgrep	binary
+eza	core	eza	eza	eza	eza	binary
+bat	core	bat	bat	bat	bat	binary
+starship	core	-	-	starship	starship	installer
+atuin	core	-	-	atuin	atuin	installer
+zoxide	core	-	-	zoxide	zoxide	binary
+imagemagick	preview	imagemagick	ImageMagick	imagemagick	imagemagick	none
+poppler	preview	poppler-utils	poppler-utils	poppler	poppler	none
+ffmpeg	preview	ffmpeg	ffmpeg	ffmpeg	ffmpeg	none
+jq	preview	jq	jq	jq	jq	none
+chafa	preview	chafa	chafa	chafa	chafa	none
+tree	preview	tree	tree	tree	tree	none
+glow	preview	-	-	glow	-	binary
+mediainfo	preview	mediainfo	mediainfo	mediainfo	-	binary
+ffmpegthumbnailer	preview	ffmpegthumbnailer	ffmpegthumbnailer	ffmpegthumbnailer	-	binary
+ueberzugpp	preview	-	-	ueberzugpp	-	binary
+kitten	preview	-	-	kitty	-	binary
+node	dev	-	-	nodejs	nodejs	installer
+npm	dev	-	-	npm	npm	installer
+nvm	dev	-	-	-	-	installer
+pnpm	dev	-	-	pnpm	pnpm	npm
+nvim	dev	neovim	neovim	neovim	neovim	binary
+dust	optional	-	-	dust	dust	binary
+procs	optional	-	-	procs	-	binary
+delta	optional	git-delta	git-delta	git-delta	-	binary
+tokei	optional	-	-	tokei	tokei	binary
+hyperfine	optional	-	-	hyperfine	hyperfine	binary
+bottom	optional	-	-	bottom	bottom	binary
+tealdeer	optional	tealdeer	tealdeer	tealdeer	tealdeer	binary
+yazi	optional	-	-	yazi	yazi	binary
+zsh-syntax-highlighting	optional	-	-	zsh-syntax-highlighting	-	none
