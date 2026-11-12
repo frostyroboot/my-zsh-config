@@ -19,7 +19,6 @@ $java\
 $kotlin\
 $haskell\
 $python\
-$custom.pipx\
 [](fg:green bg:sapphire)\
 $conda\
 [](fg:sapphire bg:lavender)\
