@@ -89,6 +89,12 @@ setup_shell() {
 }
 
 main() {
+    # Liberar espacio temporal (best effort)
+    if command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get clean 2>/dev/null || true
+    fi
+    rm -rf /tmp/cargo-install* 2>/dev/null || true
+
     parse_args "$@"
     detect_all
 

@@ -11,7 +11,7 @@ ripgrep	core	ripgrep	ripgrep	ripgrep	ripgrep	binary
 eza	core	eza	eza	eza	eza	binary
 bat	core	bat	bat	bat	bat	binary
 starship	core	-	-	starship	starship	installer
-atuin	core	-	-	atuin	atuin	installer
+atuin	core	-	-	atuin	atuin	none
 zoxide	core	-	-	zoxide	zoxide	binary
 imagemagick	preview	imagemagick	ImageMagick	imagemagick	imagemagick	none
 poppler	preview	poppler-utils	poppler-utils	poppler	poppler	none

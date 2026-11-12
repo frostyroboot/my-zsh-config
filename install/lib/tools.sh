@@ -25,8 +25,35 @@ install_starship() {
 
 install_atuin() {
     command -v atuin >/dev/null 2>&1 && { echo "[tools] atuin ya instalado"; return 0; }
-    echo "[tools] Instalando atuin..."
-    curl --proto '=https' --tlsv1.2 -LsSf https://github.com/atuinsh/atuin/releases/latest/download/atuin-installer.sh | sh
+    ensure_local_bin
+    local arch asset url tmp
+    arch="$(uname -m)"
+    case "$arch" in
+        x86_64) asset="atuin-x86_64-unknown-linux-gnu.tar.gz" ;;
+        aarch64) asset="atuin-aarch64-unknown-linux-gnu.tar.gz" ;;
+        *) asset="" ;;
+    esac
+    if [[ -n "$asset" ]]; then
+        echo "[tools] Instalando atuin (binario precompilado)..."
+        url="https://github.com/atuinsh/atuin/releases/latest/download/$asset"
+        tmp="$(mktemp -d)"
+        if curl -fsSL "$url" -o "$tmp/atuin.tar.gz" 2>/dev/null; then
+            if tar -xzf "$tmp/atuin.tar.gz" -C "$tmp" 2>/dev/null; then
+                if [[ -f "$tmp/atuin" ]]; then
+                    cp "$tmp/atuin" "$HOME/.local/bin/atuin"
+                    chmod +x "$HOME/.local/bin/atuin"
+                fi
+            fi
+        fi
+        rm -rf "$tmp"
+        if command -v atuin >/dev/null 2>&1; then
+            echo "[tools] atuin OK"
+            return 0
+        fi
+    fi
+    echo "[tools] Fallback installer para atuin..."
+    curl --proto '=https' --tlsv1.2 -LsSf \
+        https://github.com/atuinsh/atuin/releases/latest/download/atuin-installer.sh | sh
 }
 
 install_nvm() {
@@ -81,6 +108,12 @@ ensure_local_bin() {
 }
 
 ensure_rust() {
+    # Limpiar builds antiguos y redirigir temporales (evitar /tmp pequeño)
+    rm -rf /tmp/cargo-install* 2>/dev/null || true
+    mkdir -p "$HOME/.cache/tmp" "$HOME/.cache/cargo-target"
+    export TMPDIR="$HOME/.cache/tmp"
+    export CARGO_TARGET_DIR="$HOME/.cache/cargo-target"
+
     # Asegurar toolchain C (linker cc) incluso si cargo ya está instalado
     if command -v apt-get >/dev/null 2>&1; then
         command -v cc >/dev/null 2>&1 || sudo apt-get install -y -qq build-essential
@@ -114,6 +147,40 @@ install_binary() {
         zoxide)
             curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash ;;
         yazi)
+            ensure_local_bin
+            local arch asset url tmp
+            arch="$(uname -m)"
+            case "$arch" in
+                x86_64)  asset="yazi-x86_64-unknown-linux-gnu.zip" ;;
+                aarch64) asset="yazi-aarch64-unknown-linux-gnu.zip" ;;
+                *)       asset="" ;;
+            esac
+            if [[ -n "$asset" ]]; then
+                echo "[tools] Instalando yazi (binario precompilado)..."
+                url="https://github.com/sxyazi/yazi/releases/latest/download/$asset"
+                tmp="$(mktemp -d)"
+                if curl -fsSL "$url" -o "$tmp/yazi.zip" 2>/dev/null; then
+                    if command -v python3 >/dev/null 2>&1; then
+                        python3 -m zipfile -e "$tmp/yazi.zip" "$tmp/yazi" >/dev/null 2>&1
+                    elif command -v unzip >/dev/null 2>&1; then
+                        unzip -q "$tmp/yazi.zip" -d "$tmp/yazi" 2>/dev/null
+                    fi
+                    if [[ -f "$tmp/yazi/yazi" ]]; then
+                        cp "$tmp/yazi/yazi" "$HOME/.local/bin/yazi"
+                        chmod +x "$HOME/.local/bin/yazi"
+                    fi
+                    if [[ -f "$tmp/yazi/ya" ]]; then
+                        cp "$tmp/yazi/ya" "$HOME/.local/bin/ya"
+                        chmod +x "$HOME/.local/bin/ya"
+                    fi
+                fi
+                rm -rf "$tmp"
+                if command -v yazi >/dev/null 2>&1; then
+                    echo "[tools] yazi OK"
+                    return 0
+                fi
+            fi
+            echo "[tools] Fallback cargo para yazi..."
             ensure_rust
             cargo install --locked yazi-fm yazi-cli 2>/dev/null || cargo install yazi-fm yazi-cli ;;
         fzf)
