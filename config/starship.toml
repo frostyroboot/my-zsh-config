@@ -127,7 +127,7 @@ format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
 [python]
 symbol = ""
 style = "bg:green"
-format = '[[ $symbol( $version)(\(#$virtualenv\)) ](fg:crust bg:green)]($style)'
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
 
 [docker_context]
 symbol = ""
@@ -137,7 +137,7 @@ format = '[[ $symbol( $context) ](fg:crust bg:sapphire)]($style)'
 [custom.pipx]
 symbol = "📦"
 command = "pipx --version"
-when = "command -v pipx"
+when = """command -v pipx && { test -f pyproject.toml || test -f requirements.txt || test -f setup.py || test -f Pipfile || test -f setup.cfg; }"""
 style = "bg:green"
 format = '[[ $symbol( $output) ](fg:crust bg:green)]($style)'
 
