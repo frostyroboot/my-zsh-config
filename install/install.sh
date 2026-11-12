@@ -16,7 +16,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 # shellcheck source=lib/dotfiles.sh
 . "$SCRIPT_DIR/lib/dotfiles.sh"
 
-MANIFEST_FILE="$ROOT_DIR/manifests/tools.tsv"
+MANIFEST_FILE="$ROOT_DIR/install/manifests/tools.tsv"
 export MANIFEST_FILE
 
 PROFILE="full"

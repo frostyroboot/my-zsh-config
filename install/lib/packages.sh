@@ -10,7 +10,7 @@ load_manifest() {
         # Buscar relativo al script
         local base
         base="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-        MANIFEST_FILE="$base/manifests/tools.tsv"
+        MANIFEST_FILE="$base/install/manifests/tools.tsv"
     fi
     if [[ ! -r "$MANIFEST_FILE" ]]; then
         echo "[packages] Manifest no encontrado: $MANIFEST_FILE" >&2
