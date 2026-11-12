@@ -39,8 +39,9 @@ install_atuin() {
         tmp="$(mktemp -d)"
         if curl -fsSL "$url" -o "$tmp/atuin.tar.gz" 2>/dev/null; then
             if tar -xzf "$tmp/atuin.tar.gz" -C "$tmp" 2>/dev/null; then
-                if [[ -f "$tmp/atuin" ]]; then
-                    cp "$tmp/atuin" "$HOME/.local/bin/atuin"
+                atuin_bin="$(find "$tmp" -type f -name atuin 2>/dev/null | head -n1)"
+                if [[ -n "$atuin_bin" ]]; then
+                    cp "$atuin_bin" "$HOME/.local/bin/atuin"
                     chmod +x "$HOME/.local/bin/atuin"
                 fi
             fi
