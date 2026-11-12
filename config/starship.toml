@@ -19,6 +19,7 @@ $java\
 $kotlin\
 $haskell\
 $python\
+$custom.pipx\
 [](fg:green bg:sapphire)\
 $conda\
 [](fg:sapphire bg:lavender)\
@@ -132,6 +133,13 @@ format = '[[ $symbol( $version)(\(#$virtualenv\)) ](fg:crust bg:green)]($style)'
 symbol = ""
 style = "bg:sapphire"
 format = '[[ $symbol( $context) ](fg:crust bg:sapphire)]($style)'
+
+[custom.pipx]
+symbol = "📦"
+command = "pipx --version"
+when = "command -v pipx"
+style = "bg:green"
+format = '[[ $symbol( $output) ](fg:crust bg:green)]($style)'
 
 [conda]
 symbol = "  "
