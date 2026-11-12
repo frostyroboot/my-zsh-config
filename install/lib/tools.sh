@@ -5,10 +5,16 @@
 install_oh_my_zsh() {
     if [[ -d "$HOME/.oh-my-zsh" ]]; then
         echo "[tools] oh-my-zsh ya instalado"
-        return 0
+    else
+        echo "[tools] Instalando oh-my-zsh..."
+        RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     fi
-    echo "[tools] Instalando oh-my-zsh..."
-    RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    if [[ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" ]]; then
+        echo "[tools] Instalando zsh-syntax-highlighting..."
+        git clone --depth 1 https://github.com/zsh-users/zsh-syntax-highlighting.git \
+            "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" \
+            || echo "[warn] zsh-syntax-highlighting falló" >&2
+    fi
 }
 
 install_starship() {

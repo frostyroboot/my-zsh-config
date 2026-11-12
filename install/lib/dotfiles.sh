@@ -52,6 +52,9 @@ deploy_config() {
         [[ -d "$cfg/yazi" ]] && deploy_one "$cfg/yazi" "$HOME/.config/yazi"
         [[ -d "$cfg/nvim" ]] && deploy_one "$cfg/nvim" "$HOME/.config/nvim"
     fi
+
+    # Desplegar zshrc a ~/.zshrc
+    [[ -f "$ROOT_DIR/zshrc" ]] && deploy_one "$ROOT_DIR/zshrc" "$HOME/.zshrc"
 }
 
 backup_config() {
