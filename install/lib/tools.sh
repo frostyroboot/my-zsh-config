@@ -165,12 +165,14 @@ install_binary() {
                     elif command -v unzip >/dev/null 2>&1; then
                         unzip -q "$tmp/yazi.zip" -d "$tmp/yazi" 2>/dev/null
                     fi
-                    if [[ -f "$tmp/yazi/yazi" ]]; then
-                        cp "$tmp/yazi/yazi" "$HOME/.local/bin/yazi"
+                    yazi_bin="$(find "$tmp" -type f -name yazi 2>/dev/null | head -n1)"
+                    ya_bin="$(find "$tmp" -type f -name ya 2>/dev/null | head -n1)"
+                    if [[ -n "$yazi_bin" ]]; then
+                        cp "$yazi_bin" "$HOME/.local/bin/yazi"
                         chmod +x "$HOME/.local/bin/yazi"
                     fi
-                    if [[ -f "$tmp/yazi/ya" ]]; then
-                        cp "$tmp/yazi/ya" "$HOME/.local/bin/ya"
+                    if [[ -n "$ya_bin" ]]; then
+                        cp "$ya_bin" "$HOME/.local/bin/ya"
                         chmod +x "$HOME/.local/bin/ya"
                     fi
                 fi

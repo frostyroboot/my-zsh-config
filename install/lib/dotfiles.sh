@@ -13,7 +13,7 @@ backup_path() {
     fi
 }
 
-# Copia un archivo o directorio del repo a destino, con backup.
+# Copia un archivo o directorio del repo a destino (sin backup).
 deploy_one() {
     local src="$1" dst="$2"
     if [[ ! -e "$src" ]]; then
@@ -21,11 +21,11 @@ deploy_one() {
         return 0
     fi
     mkdir -p "$(dirname "$dst")"
-    backup_path "$dst"
     if [[ -d "$src" ]]; then
+        rm -rf "$dst"
         cp -r "$src" "$dst"
     else
-        cp "$src" "$dst"
+        cp -f "$src" "$dst"
     fi
     echo "[dotfiles] desplegado: $src -> $dst"
 }
@@ -36,7 +36,6 @@ deploy_config() {
         echo "[dotfiles] Actualizando config existente..."
         git -C "$install_dir" pull --ff-only 2>/dev/null || echo "[dotfiles] No se pudo hacer pull (cambios locales?)" >&2
     elif [[ -e "$install_dir" ]]; then
-        backup_path "$install_dir"
         echo "[dotfiles] Directorio existente sin git; dejando como está"
     else
         echo "[dotfiles] Clonando config..."
@@ -58,8 +57,6 @@ deploy_config() {
 }
 
 backup_config() {
-    local install_dir="${ZSH_CONFIG:-$HOME/.config/zsh}"
-    if [[ -e "$install_dir" && ! -d "$install_dir/.git" ]]; then
-        backup_path "$install_dir"
-    fi
+    # Backups deshabilitados: no se crean archivos .bak
+    :
 }
