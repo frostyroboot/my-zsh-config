@@ -61,7 +61,16 @@ parse_args() {
 maybe_confirm() {
     [[ "$YES" -eq 1 ]] && return 0
     [[ "$DRY_RUN" -eq 1 ]] && return 0
-    read -r -p "¿Continuar con perfil '$PROFILE'? [y/N] " ans
+    local ans
+    if [[ -t 0 ]]; then
+        read -r -p "¿Continuar con perfil '$PROFILE'? [y/N] " ans
+    elif [[ -t 1 && -r /dev/tty && -w /dev/tty ]]; then
+        printf "¿Continuar con perfil '%s'? [y/N] " "$PROFILE" >/dev/tty
+        read -r ans </dev/tty || true
+    else
+        echo "[install] Entorno no interactivo: usa --yes para confirmar." >&2
+        return 1
+    fi
     [[ "$ans" =~ ^[yY]$ ]]
 }
 
