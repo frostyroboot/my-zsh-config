@@ -81,6 +81,14 @@ ensure_local_bin() {
 }
 
 ensure_rust() {
+    # Asegurar toolchain C (linker cc) incluso si cargo ya está instalado
+    if command -v apt-get >/dev/null 2>&1; then
+        command -v cc >/dev/null 2>&1 || sudo apt-get install -y -qq build-essential
+    elif command -v dnf >/dev/null 2>&1; then
+        command -v cc >/dev/null 2>&1 || sudo dnf install -y gcc make
+    elif command -v pacman >/dev/null 2>&1; then
+        command -v cc >/dev/null 2>&1 || sudo pacman -S --noconfirm --needed base-devel
+    fi
     if command -v cargo >/dev/null 2>&1; then
         return 0
     fi
@@ -122,6 +130,7 @@ install_binary() {
             local crate="$tool"
             case "$tool" in
                 fd) crate="fd-find" ;;
+                dust) crate="du-dust" ;;
                 ripgrep) crate="ripgrep" ;;
                 delta) crate="git-delta" ;;
                 bottom) crate="bottom" ;;
@@ -132,7 +141,9 @@ install_binary() {
             return 1 ;;
     esac
 
-    if command -v "$tool" >/dev/null 2>&1 || [[ -x "$HOME/.local/bin/$tool" ]]; then
+    local check_bin="$tool"
+    [[ "$tool" == "bottom" ]] && check_bin="btm"
+    if command -v "$check_bin" >/dev/null 2>&1 || [[ -x "$HOME/.local/bin/$check_bin" ]] || [[ -x "$HOME/.cargo/bin/$check_bin" ]]; then
         echo "[tools] $tool OK"
         return 0
     fi
