@@ -220,3 +220,51 @@ install_binary() {
     echo "[tools] $tool no quedó instalado" >&2
     return 1
 }
+# ---------- Nix ----------
+
+install_nix() {
+    if command -v nix >/dev/null 2>&1; then
+        echo "[tools] nix ya instalado"
+        return 0
+    fi
+    echo "[tools] Instalando Nix (single-user)..."
+    if [[ "$(uname -s)" == "Linux" ]]; then
+        sh <(curl -L https://nixos.org/nix/install) --no-daemon 2>&1 | tail -5
+    else
+        echo "[tools] Nix solo soportado en Linux aquí" >&2
+        return 1
+    fi
+    # cargar entorno
+    if [[ -f "$HOME/.nix-profile/etc/profile.d/nix.sh" ]]; then
+        # shellcheck disable=SC1091
+        . "$HOME/.nix-profile/etc/profile.d/nix.sh"
+    fi
+    command -v nix >/dev/null 2>&1
+}
+
+install_via_nix() {
+    local attr="$1"
+    [[ -z "$attr" || "$attr" == "-" || "$attr" == "none" ]] && return 1
+    ensure_local_bin
+    if ! command -v nix >/dev/null 2>&1; then
+        install_nix || return 1
+    fi
+    echo "[tools] Instalando $attr via nix..."
+    nix profile install "nixpkgs#${attr}" 2>&1 | tail -5
+    # verificar
+    local bin="${attr##*/}"
+    # mapeo de attrs con binario distinto
+    case "$attr" in
+        neovim) bin="nvim" ;;
+        fd) bin="fd" ;;
+        bat) bin="bat" ;;
+        ripgrep) bin="rg" ;;
+        bottom) bin="btm" ;;
+    esac
+    if command -v "$bin" >/dev/null 2>&1 || [[ -x "$HOME/.nix-profile/bin/$bin" ]]; then
+        echo "[tools] $attr OK (nix)"
+        return 0
+    fi
+    echo "[tools] $attr no quedó instalado (nix)" >&2
+    return 1
+}

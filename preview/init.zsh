@@ -26,7 +26,7 @@ export FZF_PREVIEW_DEBUG="${FZF_PREVIEW_DEBUG:-0}"
 _preview_height="--height=80%"
 _preview_layout="--layout=reverse"
 _preview_border="--border"
-_preview_window="--preview-window=right:60%"
+_preview_window="--preview-window=right:60%:wrap"
 
 # Solo añadir si no están ya presentes
 _add_opt_if_missing() {

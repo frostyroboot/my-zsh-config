@@ -12,7 +12,7 @@
 # ====================== CONFIGURACIÓN ======================
 PREVIEW_DIR="${FZF_PREVIEW_DIR:-$HOME/.config/zsh/preview}"
 TMP_DIR=$(mktemp -d /tmp/fzf-preview.XXXXXXXXXX) || { echo "[fzf-preview] ERROR: no se pudo crear TMP_DIR" >&2; exit 1; }
-export FZF_STATE_FILE="$TMP_DIR/state"
+
 TMP_IMG="$TMP_DIR/preview"
 export UEBERZUG_FIFO=""
 
@@ -26,6 +26,7 @@ mkdir -p "$CACHE_DIR"
 # Elegir backend de imagen (lógica centralizada en common.sh)
 IMG_PREVIEW=$(select_img_backend)
 export IMG_PREVIEW
+[[ "${FZF_PREVIEW_DEBUG:-0}" == "1" ]] && echo "[fzf-preview] IMG_PREVIEW=$IMG_PREVIEW" >> /tmp/fzf-preview-debug.log
 
 # ====================== INICIAR DAEMON UEBERZUGPP (si aplica) ======================
 if [[ "$IMG_PREVIEW" == "ueberzug_preview" ]]; then
@@ -56,10 +57,20 @@ trap cleanup HUP INT TERM QUIT EXIT
 
 # ====================== CONFIGURAR FZF ======================
 # File listing: fd con archivos
-export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
-export FZF_ALTERNATE_COMMAND='fd --type d --hidden --follow --exclude .git'
-
-echo "file" > "$FZF_STATE_FILE"
+if command -v fd >/dev/null 2>&1; then
+    export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+elif command -v fdfind >/dev/null 2>&1; then
+    export FZF_DEFAULT_COMMAND='fdfind --type f --hidden --follow --exclude .git'
+else
+    export FZF_DEFAULT_COMMAND='find . -type f -not -path "*/.git/*"'
+fi
+if command -v fd >/dev/null 2>&1; then
+    export FZF_ALTERNATE_COMMAND='fd --type d --hidden --follow --exclude .git'
+elif command -v fdfind >/dev/null 2>&1; then
+    export FZF_ALTERNATE_COMMAND='fdfind --type d --hidden --follow --exclude .git'
+else
+    export FZF_ALTERNATE_COMMAND='find . -type d -not -path "*/.git/*"'
+fi
 
 # ====================== EJECUTAR FZF ======================
 # NO usar exec fzf (perderíamos el trap)
@@ -67,4 +78,5 @@ echo "file" > "$FZF_STATE_FILE"
 fzf --reverse "$@" \
     --preview "$PREVIEW_DIR/fz-file2preview.sh {} \"$IMG_PREVIEW\" \"$CACHE_DIR\" \"$TMP_IMG\" \"$UEBERZUG_FIFO\"" \
     --bind 'resize:refresh-preview' \
-    --bind 'focus,load:transform-header:file --brief {}'
+    --bind 'focus,load:transform-header:file --brief {}' \
+    --bind 'ctrl-w:toggle-preview-wrap'

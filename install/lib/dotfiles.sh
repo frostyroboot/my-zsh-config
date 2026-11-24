@@ -21,8 +21,11 @@ deploy_one() {
         return 0
     fi
     mkdir -p "$(dirname "$dst")"
+    if [[ -e "$dst" || -L "$dst" ]]; then
+        local backup="${dst}.bak.$(date +%Y%m%d%H%M%S)"
+        mv "$dst" "$backup" 2>/dev/null && echo "[dotfiles] backup: $dst -> $backup"
+    fi
     if [[ -d "$src" ]]; then
-        rm -rf "$dst"
         cp -r "$src" "$dst"
     else
         cp -f "$src" "$dst"
@@ -57,6 +60,12 @@ deploy_config() {
 }
 
 backup_config() {
-    # Backups deshabilitados: no se crean archivos .bak
-    :
+    local install_dir="${ZSH_CONFIG:-$HOME/.config/zsh}"
+    # Respaldar configs de apps que se van a sobrescribir
+    for p in "$HOME/.config/nvim" "$HOME/.config/yazi" "$HOME/.config/atuin" "$HOME/.config/starship.toml" "$HOME/.zshrc"; do
+        if [[ -e "$p" || -L "$p" ]]; then
+            local backup="${p}.bak.$(date +%Y%m%d%H%M%S)"
+            cp -a "$p" "$backup" 2>/dev/null && echo "[dotfiles] backup: $p -> $backup"
+        fi
+    done
 }

@@ -3,6 +3,9 @@
 
 export FZF_PREVIEW_WRAPPER="${FZF_PREVIEW_DIR:-$ZSH_CONFIG/preview}/fz-wrapper.sh"
 
+# Binarios portables (Debian/Ubuntu usan nombres con sufijo)
+_fz_fd()  { if command -v fd      >/dev/null 2>&1; then echo fd;      elif command -v fdfind  >/dev/null 2>&1; then echo fdfind;  else echo "find"; fi; }
+
 # ====================== FUNCIONES DE NAVEGACIÓN ======================
 
 # Abrir archivo con editor
@@ -19,7 +22,12 @@ ff() {
 # Cambiar a directorio
 fcd() {
     local dir
-    dir="$($FZF_PREVIEW_WRAPPER < <(fd -t d --hidden --follow --exclude .git))" && cd "$dir"
+    local _fd="$(_fz_fd)"
+    if [[ "$_fd" == "find" ]]; then
+        dir="$($FZF_PREVIEW_WRAPPER < <(find . -type d -not -path '*/.git/*'))" && cd "$dir"
+    else
+        dir="$($FZF_PREVIEW_WRAPPER < <($_fd -t d --hidden --follow --exclude .git))" && cd "$dir"
+    fi
 }
 
 fdz() { fcd; }  # alias corto

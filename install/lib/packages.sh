@@ -73,6 +73,7 @@ install_packages_for_profile() {
         tprofile="$(echo "$line" | cut -f2)"
         profile_includes "$profile" "$tprofile" || continue
         pkg="$(pkg_name_for_pm "$line" "$pm")"
+        nix_attr="$(echo "$line" | cut -f8)"
         if command -v "$tool" >/dev/null 2>&1; then
             echo "[packages] $tool ya instalado, saltando"
             continue
@@ -86,6 +87,9 @@ install_packages_for_profile() {
             if [[ "$fallback" != "none" && "$fallback" != "-" && -n "$fallback" ]]; then
                 install_binary "$tool" || true
             fi
+            if ! command -v "$tool" >/dev/null 2>&1; then
+                install_via_nix "$nix_attr" || true
+            fi
             continue
         fi
 
@@ -96,6 +100,9 @@ install_packages_for_profile() {
             echo "[packages] $tool FALLÓ" >&2
             if [[ "$fallback" != "none" && "$fallback" != "-" && -n "$fallback" ]]; then
                 install_binary "$tool" || true
+            fi
+            if ! command -v "$tool" >/dev/null 2>&1; then
+                install_via_nix "$nix_attr" || true
             fi
         fi
     done < "$MANIFEST_FILE"

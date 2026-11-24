@@ -63,7 +63,7 @@ Este one-liner resuelve todos los problemas de lifecycle:
 | Tipo | Herramienta | Notas |
 |------|-------------|-------|
 | Directorio | `eza --tree` | Con iconos |
-| Imagen | `ueberzugpp` (nativo) / `chafa` (fallback) | Auto-orient, thumbnail cacheado |
+| Imagen | `ueberzugpp` (nativo) / kitty icat | Auto-orient, thumbnail cacheado |
 | Video | `ffmpegthumbnailer` / `ffmpeg` | Primer fotograma cacheado |
 | PDF | `pdftoppm` | Primera página cacheada |
 | Audio | `ffmpeg` (cover art) | Thumbnail cacheado |
@@ -78,7 +78,6 @@ Este one-liner resuelve todos los problemas de lifecycle:
 
 1. **Kitty/Ghostty** (`$KITTY_WINDOW_ID` o `$GHOSTTY_RESOURCES_DIR`): usa `kitten icat` (nativo)
 2. **ueberzugpp** (disponible): usa el daemon + FIFO
-3. **chafa**: fallback a bloques Unicode con color
 4. **catimg**: ASCII art (baja calidad)
 
 ## Dependencias
@@ -90,7 +89,7 @@ sudo pacman -S fzf fd eza bat
 
 ### Recomendadas (para preview rico)
 ```bash
-sudo pacman -S chafa ueberzugpp glow jq mediainfo \
+sudo pacman -S ueberzugpp glow jq mediainfo \
                pdftoppm ffmpegthumbnailer imagemagick \
                p7zip
 ```
@@ -165,4 +164,3 @@ git checkout init.zsh plugins/fzf.zsh functions/fzf.zsh keybindings/fzf.zsh
 - [Yazi - yazi-adapter/src/drivers/ueberzug.rs](https://github.com/sxyazi/yazi) - Referencia de patrón IPC
 - [ranger - img_display.py (UeberzugImageDisplayer)](https://github.com/ranger/ranger) - Referencia de Popen + Timer kill
 - [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - Daemon de imágenes para terminal
-- [chafa](https://hpjansson.org/chafa/) - Image-to-ANSI converter (fallback)

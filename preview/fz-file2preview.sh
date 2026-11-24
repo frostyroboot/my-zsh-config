@@ -5,6 +5,7 @@
 #          (o a stdout como fallback)
 
 FILE="${1:?file2preview: archivo requerido}"
+[[ "${FZF_PREVIEW_DEBUG:-0}" == "1" ]] && echo "[fzf-preview] called: FILE=$FILE" >> /tmp/fzf-preview-debug.log
 IMG_PREVIEW="${2:-generic_preview}"
 CACHE_DIR="${3:-${XDG_CACHE_HOME:-$HOME/.cache}/fzf-preview}"
 TMP_IMG="${4:-/tmp/fzf-preview-img}"
@@ -13,6 +14,15 @@ UEBERZUG_FIFO="${5:-}"
 # Cargar utilidades
 # shellcheck source=common.sh
 source "${FZF_PREVIEW_DIR:-$HOME/.config/zsh/preview}/common.sh"
+
+# bat portable (Debian/Ubuntu: batcat)
+if command -v bat >/dev/null 2>&1; then
+    BAT_CMD="bat"
+elif command -v batcat >/dev/null 2>&1; then
+    BAT_CMD="batcat"
+else
+    BAT_CMD="cat"
+fi
 
 # ====================== HELPERS DE CACHÉ ======================
 # Genera una clave única basada en mtime + size
@@ -72,9 +82,11 @@ kitty_preview() {
         generic_preview "$file"
         return
     }
-    kitten icat --clear --transfer-mode=memory --unicode-placeholder --stdin=no \
+    if ! timeout 8 kitten icat --clear --transfer-mode=memory --unicode-placeholder --stdin=no \
         --place="${FZF_PREVIEW_COLUMNS:-80}x${FZF_PREVIEW_LINES:-24}@${FZF_PREVIEW_LEFT:-0}x${FZF_PREVIEW_TOP:-0}" \
-        -- "$file" 2>/dev/null
+        -- "$file" 2>/dev/null; then
+        generic_preview "$file"
+    fi
 }
 
 # Backend catimg: ASCII art
@@ -85,16 +97,6 @@ catimg_preview() {
         return
     }
     catimg -r 2 -w $((2 * ${FZF_PREVIEW_COLUMNS:-80})) "$file" 2>/dev/null
-}
-
-# Backend chafa: bloques Unicode con color
-chafa_preview() {
-    local file="$1"
-    command -v chafa >/dev/null 2>&1 || {
-        generic_preview "$file"
-        return
-    }
-    chafa --size "${FZF_PREVIEW_COLUMNS:-80}x${FZF_PREVIEW_LINES:-24}" "$file" 2>/dev/null
 }
 
 # Fallback: solo file
@@ -115,7 +117,7 @@ preview_image() {
     # Generar thumbnail: rotar según EXIF y redimensionar
     local thumb="$TMP_IMG.jpg"
     if command -v magick >/dev/null 2>&1; then
-        magick "$file" -auto-orient -resize "x1080>" -quality 85 "$thumb" 2>/dev/null || cp "$file" "$thumb"
+        timeout 10 magick "$file" -auto-orient -resize "x1080>" -quality 85 "$thumb" 2>/dev/null || cp "$file" "$thumb"
     else
         cp "$file" "$thumb" 2>/dev/null
     fi
@@ -250,8 +252,8 @@ preview_markdown() {
     local file="$1"
     if command -v glow >/dev/null 2>&1; then
         glow --width "${FZF_PREVIEW_COLUMNS:-80}" -- "$file" 2>/dev/null
-    elif command -v bat >/dev/null 2>&1; then
-        bat --style="${BAT_STYLE:-numbers}" --color=always --pager=never --language=markdown -- "$file" 2>/dev/null
+    elif command -v bat >/dev/null 2>&1 || command -v batcat >/dev/null 2>&1; then
+        ${BAT_CMD} --style="${BAT_STYLE:-numbers}" --color=always --pager=never --terminal-width="${FZF_PREVIEW_COLUMNS:-80}" --language=markdown -- "$file" 2>/dev/null
     else
         cat -- "$file"
     fi
@@ -262,8 +264,8 @@ preview_json() {
     local file="$1"
     if command -v jq >/dev/null 2>&1; then
         jq -C . -- "$file" 2>/dev/null
-    elif command -v bat >/dev/null 2>&1; then
-        bat --style="${BAT_STYLE:-numbers}" --color=always --pager=never --language=json -- "$file" 2>/dev/null
+    elif command -v bat >/dev/null 2>&1 || command -v batcat >/dev/null 2>&1; then
+        ${BAT_CMD} --style="${BAT_STYLE:-numbers}" --color=always --pager=never --terminal-width="${FZF_PREVIEW_COLUMNS:-80}" --language=json -- "$file" 2>/dev/null
     else
         cat -- "$file"
     fi
@@ -272,7 +274,7 @@ preview_json() {
 # Archivos comprimidos: lista de contenido
 preview_archive() {
     local file="$1"
-    case "${file:l}" in
+    case "${file,,}" in
         *.zip) unzip -l -- "$file" 2>/dev/null | head -30 ;;
         *.tar|*.tar.gz|*.tgz|*.tar.bz2|*.tbz2|*.tar.xz|*.txz) tar -tvf -- "$file" 2>/dev/null | head -30 ;;
         *.7z) 7z l -- "$file" 2>/dev/null | head -30 ;;
@@ -292,8 +294,8 @@ preview_text() {
         echo "⚠️  Archivo grande (>100MB), mostrando primeras líneas"
         read_with_timeout "$file" 100
     else
-        if command -v bat >/dev/null 2>&1; then
-            bat --style="${BAT_STYLE:-numbers}" --color=always --pager=never -- "$file" 2>/dev/null || cat -- "$file"
+        if command -v bat >/dev/null 2>&1 || command -v batcat >/dev/null 2>&1; then
+            ${BAT_CMD} --style="${BAT_STYLE:-numbers}" --color=always --pager=never --terminal-width="${FZF_PREVIEW_COLUMNS:-80}" -- "$file" 2>/dev/null || cat -- "$file"
         else
             cat -- "$file"
         fi
@@ -305,15 +307,21 @@ preview_binary() {
     file -- "$1"
 }
 
+# Limpia imagen previa (kitty/ueberzug) antes de dibujar nuevo preview
+clear_image() {
+    if [[ "$IMG_PREVIEW" == "kitty_preview" ]]; then
+        # Borra imágenes kitty escribiendo la secuencia a stdout (fzf la captura y renderiza)
+        printf '\033_Ga=d\033\\'
+    elif [[ -n "$UEBERZUG_FIFO" && -p "$UEBERZUG_FIFO" ]]; then
+        echo '{"action": "remove", "identifier": "fzf"}' >> "$UEBERZUG_FIFO" 2>/dev/null || true
+    fi
+}
+
 # ====================== DESPACHADOR PRINCIPAL ======================
 # Determinar tipo y llamar al handler apropiado
 # detect_type devuelve tipos cortos: directory, image, video, audio, pdf, json, markdown, epub, archive, text, binary
+clear_image
 TYPE=$(detect_type "$FILE")
-
-# Limpiar imagen anterior (solo si hay daemon de ueberzug activo)
-if [[ -n "$UEBERZUG_FIFO" && -p "$UEBERZUG_FIFO" ]]; then
-    echo '{"action": "remove", "identifier": "fzf"}' >> "$UEBERZUG_FIFO" 2>/dev/null || true
-fi
 
 # Directorio
 if [[ -d "$FILE" ]]; then
@@ -334,7 +342,7 @@ case "$TYPE" in
     text)               preview_text "$FILE" ;;
     binary|*)
         # Fallback por extensión para binarios/desconocidos
-        case "${FILE:l}" in
+        case "${FILE,,}" in
             *.epub) preview_epub "$FILE" ;;
             *.zip|*.tar*|*.7z|*.rar|*.gz|*.bz2|*.xz) preview_archive "$FILE" ;;
             *) preview_binary "$FILE" ;;

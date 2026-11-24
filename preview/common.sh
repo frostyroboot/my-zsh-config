@@ -30,7 +30,7 @@ detect_type() {
         text/markdown)           echo "markdown" ;;
         text/*)
             # Markdown con MIME genérico: detectar por extensión
-            case "${file:l}" in
+            case "${file,,}" in
                 *.md|*.markdown) echo "markdown" ;;
                 *)               echo "text" ;;
             esac
@@ -47,7 +47,7 @@ detect_type() {
 
 # Fallback por extensión cuando `file` no detecta bien
 detect_type_by_ext() {
-    local file="${1:l}"  # lowercase
+    local file="${1,,}"  # lowercase
     case "$file" in
         # Imágenes
         *.png|*.jpg|*.jpeg|*.gif|*.webp|*.bmp|*.svg|*.ico|*.heic|*.avif|*.jxl|*.tiff|*.tif)
@@ -140,10 +140,6 @@ select_img_backend() {
     fi
     if [[ "$is_termux" -eq 0 ]] && { command -v ueberzugpp >/dev/null 2>&1 || command -v ueberzug >/dev/null 2>&1; }; then
         echo "ueberzug_preview"
-        return
-    fi
-    if command -v chafa >/dev/null 2>&1; then
-        echo "chafa_preview"
         return
     fi
     if command -v catimg >/dev/null 2>&1; then
