@@ -29,6 +29,9 @@ if command -v bat >/dev/null 2>&1 || command -v batcat >/dev/null 2>&1; then ech
 echo "== common.sh tests =="
 "$ROOT/tests/test_common.sh"
 
+echo "== packages tests =="
+"$ROOT/tests/test_packages.sh"
+
 echo "== helpers tests =="
 ZSH_CONFIG="$ROOT" zsh "$ROOT/tests/test_helpers.zsh"
 

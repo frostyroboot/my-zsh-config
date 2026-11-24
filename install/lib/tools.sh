@@ -268,3 +268,20 @@ install_via_nix() {
     echo "[tools] $attr no quedó instalado (nix)" >&2
     return 1
 }
+
+# ---------- Symlinks de conveniencia ----------
+create_symlinks() {
+    ensure_local_bin
+    local changed=0
+    if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
+        ln -sf "$(command -v fdfind)" "$HOME/.local/bin/fd" && { echo "[symlinks] fd -> fdfind"; changed=1; }
+    fi
+    if command -v batcat >/dev/null 2>&1 && ! command -v bat >/dev/null 2>&1; then
+        ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat" && { echo "[symlinks] bat -> batcat"; changed=1; }
+    fi
+    if command -v rg >/dev/null 2>&1 && ! command -v ripgrep >/dev/null 2>&1; then
+        ln -sf "$(command -v rg)" "$HOME/.local/bin/ripgrep" && { echo "[symlinks] ripgrep -> rg"; changed=1; }
+    fi
+    [[ "$changed" -eq 0 ]] && echo "[symlinks] nada que hacer"
+    return 0
+}

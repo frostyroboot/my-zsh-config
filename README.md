@@ -13,7 +13,11 @@ Opciones:
 curl -fsSL https://raw.githubusercontent.com/frostyroboot/my-zsh-config/main/install.sh | bash -s -- --full --yes
 # --minimal | --preview | --dev | --full
 # --dry-run | --no-shell
+# --with-nix | --with-cargo | --symlinks | --no-interactive
 ```
+
+En modo interactivo, el instalador pregunta (TUI) si deseas habilitar Nix/Cargo
+y crear symlinks de conveniencia. Usa --yes para saltar confirmaciones.
 
 ## Requisitos
 - Linux (apt/dnf/pacman) o Termux

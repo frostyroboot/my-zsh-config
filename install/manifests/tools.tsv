@@ -1,43 +1,44 @@
-# tool<TAB>profile<TAB>apt<TAB>dnf<TAB>pacman<TAB>pkg(termux)<TAB>fallback<TAB>nix
+# tool<TAB>profile<TAB>apt<TAB>dnf<TAB>pacman<TAB>pkg(termux)<TAB>fallback<TAB>nix<TAB>bin
 # profile: core | preview | dev | optional
 # fallback: none | binary | cargo | installer
+# bin: binario(s) reales separados por | para deteccion (o marcador __nvm__/__zshsh__)
 
-zsh	core	zsh	zsh	zsh	zsh	none	zsh
-git	core	git	git	git	git	none	git
-curl	core	curl	curl	curl	curl	none	curl
-fzf	core	fzf	fzf	fzf	fzf	binary	fzf
-fd	core	fd-find	fd-find	fd	fd	binary	fd
-ripgrep	core	ripgrep	ripgrep	ripgrep	ripgrep	binary	ripgrep
-eza	core	eza	eza	eza	eza	binary	eza
-bat	core	bat	bat	bat	bat	binary	bat
-starship	core	-	-	starship	starship	installer	starship
-atuin	core	-	-	atuin	atuin	none	atuin
-zoxide	core	-	-	zoxide	zoxide	binary	zoxide
-imagemagick	preview	imagemagick	ImageMagick	imagemagick	imagemagick	none	imagemagick
-poppler	preview	poppler-utils	poppler-utils	poppler	poppler	none	poppler
-ffmpeg	preview	ffmpeg	ffmpeg	ffmpeg	ffmpeg	none	ffmpeg
-jq	preview	jq	jq	jq	jq	none	jq
-tree	preview	tree	tree	tree	tree	none	tree
-glow	preview	-	-	glow	-	none	glow
-mediainfo	preview	mediainfo	mediainfo	mediainfo	-	binary	mediainfo
-ffmpegthumbnailer	preview	ffmpegthumbnailer	ffmpegthumbnailer	ffmpegthumbnailer	-	binary	ffmpegthumbnailer
-ueberzugpp	preview	-	-	ueberzugpp	-	none	-
-kitten	preview	-	-	kitty	-	none	kitty
-node	dev	-	-	nodejs	nodejs	installer	nodejs
-npm	dev	-	-	npm	npm	installer	npm
-nvm	dev	-	-	-	-	none	-
-pnpm	dev	-	-	pnpm	pnpm	none	pnpm
-nvim	dev	-	-	-	-	binary	neovim
-dust	optional	-	-	dust	dust	binary	dust
-procs	optional	-	-	procs	-	binary	procs
-delta	optional	git-delta	git-delta	git-delta	-	binary	delta
-tokei	optional	-	-	tokei	tokei	binary	tokei
-hyperfine	optional	-	-	hyperfine	hyperfine	binary	hyperfine
-bottom	optional	-	-	bottom	bottom	binary	bottom
-tealdeer	optional	tealdeer	tealdeer	tealdeer	tealdeer	binary	tealdeer
-yazi	optional	-	-	yazi	yazi	binary	yazi
-python3	dev	python3	python3	python	python	none	python3
-python3-pip	dev	python3-pip	python3-pip	python-pip	python-pip	none	python3
-pipx	dev	pipx	pipx	python-pipx	pipx	none	pipx
-argcomplete	dev	python3-argcomplete	python3-argcomplete	python-argcomplete	python-argcomplete	none	-
-zsh-syntax-highlighting	optional	-	-	zsh-syntax-highlighting	-	none	zsh-syntax-highlighting
+zsh	core	zsh	zsh	zsh	zsh	none	zsh	zsh
+git	core	git	git	git	git	none	git	git
+curl	core	curl	curl	curl	curl	none	curl	curl
+fzf	core	fzf	fzf	fzf	fzf	binary	fzf	fzf
+fd	core	fd-find	fd-find	fd	fd	binary	fd	fd|fdfind
+ripgrep	core	ripgrep	ripgrep	ripgrep	ripgrep	binary	ripgrep	rg|ripgrep
+eza	core	eza	eza	eza	eza	binary	eza	eza
+bat	core	bat	bat	bat	bat	binary	bat	bat|batcat
+starship	core	-	-	starship	starship	installer	starship	starship
+atuin	core	-	-	atuin	atuin	binary	atuin	atuin
+zoxide	core	-	-	zoxide	zoxide	binary	zoxide	zoxide
+imagemagick	preview	imagemagick	ImageMagick	imagemagick	imagemagick	none	imagemagick	magick|convert
+poppler	preview	poppler-utils	poppler-utils	poppler	poppler	none	poppler	pdftoppm
+ffmpeg	preview	ffmpeg	ffmpeg	ffmpeg	ffmpeg	none	ffmpeg	ffmpeg
+jq	preview	jq	jq	jq	jq	none	jq	jq
+tree	preview	tree	tree	tree	tree	none	tree	tree
+glow	preview	glow	glow	glow	-	none	glow	glow
+mediainfo	preview	mediainfo	mediainfo	mediainfo	-	binary	mediainfo	mediainfo
+ffmpegthumbnailer	preview	ffmpegthumbnailer	ffmpegthumbnailer	ffmpegthumbnailer	-	binary	ffmpegthumbnailer	ffmpegthumbnailer
+ueberzugpp	preview	-	-	ueberzugpp	-	none	-	ueberzugpp
+kitten	preview	-	-	kitty	-	none	kitty	kitten
+node	dev	-	-	nodejs	nodejs	installer	nodejs	node
+npm	dev	-	-	npm	npm	installer	npm	npm
+nvm	dev	-	-	-	-	none	-	__nvm__
+pnpm	dev	-	-	pnpm	pnpm	none	pnpm	pnpm
+nvim	dev	neovim	neovim	neovim	neovim	none	neovim	nvim
+dust	optional	-	-	dust	dust	binary	dust	dust
+procs	optional	-	-	procs	-	binary	procs	procs
+delta	optional	git-delta	git-delta	git-delta	-	binary	delta	delta
+tokei	optional	-	-	tokei	tokei	binary	tokei	tokei
+hyperfine	optional	-	-	hyperfine	hyperfine	binary	hyperfine	hyperfine
+bottom	optional	-	-	bottom	bottom	binary	bottom	btm|bottom
+tealdeer	optional	tealdeer	tealdeer	tealdeer	tealdeer	binary	tealdeer	tldr|tealdeer
+yazi	optional	-	-	yazi	yazi	binary	yazi	yazi
+python3	dev	python3	python3	python	python	none	python3	python3
+python3-pip	dev	python3-pip	python3-pip	python-pip	python-pip	none	python3	pip3|pip
+pipx	dev	pipx	pipx	python-pipx	pipx	none	pipx	pipx
+argcomplete	dev	python3-argcomplete	python3-argcomplete	python-argcomplete	python-argcomplete	none	-	register-python-argcomplete
+zsh-syntax-highlighting	optional	-	-	zsh-syntax-highlighting	-	none	zsh-syntax-highlighting	__zshsh__
