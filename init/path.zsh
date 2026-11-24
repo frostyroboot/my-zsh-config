@@ -8,6 +8,18 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME/bin:$PATH" ;;
 esac
 
+# Cargo (Rust) — binarios instalados con `cargo install`
+if [[ -d "$HOME/.cargo/bin" ]]; then
+    case ":$PATH:" in
+      *":$HOME/.cargo/bin:"*) ;;
+      *) export PATH="$HOME/.cargo/bin:$PATH" ;;
+    esac
+fi
+if [[ -f "$HOME/.cargo/env" ]]; then
+    # shellcheck disable=SC1091
+    . "$HOME/.cargo/env" 2>/dev/null || true
+fi
+
 # Nix
 if [[ -d "$HOME/.nix-profile/bin" ]]; then
     case ":$PATH:" in
